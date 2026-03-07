@@ -1,7 +1,14 @@
 {
-  "name": "catalog",
+  "name": "catalyst",
   "version": "0.1.0",
   "private": true,
+  "description": "Product catalog SaaS platform with WhatsApp ordering integration",
+  "author": "Himanshu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/himaaanshuu/Catalyst.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
