@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/Library/Supabase";
+import Navbar from "@/app/Component/Navbar";
 
 /* ─────────────────────────────────────────────
    GLOBAL STYLES
@@ -327,71 +328,6 @@ function HeroBG() {
 /* ─────────────────────────────────────────────
    NAVBAR
 ───────────────────────────────────────────── */
-function Navbar({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", fn);
-    return () => window.removeEventListener("scroll", fn);
-  }, []);
-
-  return (
-    <nav className="navbar" style={{ padding: scrolled ? "12px 48px" : "18px 48px" }}>
-      <button onClick={() => onNavigate("landing")}
-        style={{ background: "none", border: "none", cursor: "pointer" }}>
-        <BrandMark />
-      </button>
-
-      {/* Nav links — Pricing removed */}
-      <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: "32px" }}>
-        {["Features", "Templates"].map(l => (
-          <button key={l} style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: "var(--muted)", fontSize: "0.88rem", fontWeight: 500,
-            fontFamily: "'Outfit', sans-serif", transition: "color 0.2s"
-          }}
-          onMouseEnter={e => e.target.style.color = "#f5f3ef"}
-          onMouseLeave={e => e.target.style.color = "var(--muted)"}
-          >{l}</button>
-        ))}
-
-        {/* How to Generate — top-level nav button */}
-        <button
-          onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
-          style={{
-            background: "rgba(229,40,30,0.08)",
-            border: "1px solid rgba(229,40,30,0.22)",
-            borderRadius: 8, padding: "7px 16px",
-            color: "rgba(229,40,30,0.9)", fontSize: "0.85rem", fontWeight: 600,
-            fontFamily: "'Outfit', sans-serif", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: 7,
-            transition: "background 0.2s, border-color 0.2s"
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = "rgba(229,40,30,0.15)";
-            e.currentTarget.style.borderColor = "rgba(229,40,30,0.5)";
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = "rgba(229,40,30,0.08)";
-            e.currentTarget.style.borderColor = "rgba(229,40,30,0.22)";
-          }}
-        >
-          <span style={{ width: 6, height: 6, background: "var(--red)", borderRadius: "50%", animation: "glowPulse 2s infinite" }} />
-          How to Generate
-        </button>
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <button className="c-btn-ghost" style={{ padding: "9px 20px", fontSize: "0.85rem" }}>Login</button>
-        <button className="c-btn-red"
-          style={{ padding: "9px 20px", fontSize: "0.85rem", animation: "none" }}
-          onClick={() => onNavigate("register")}
-        >Get Started</button>
-      </div>
-    </nav>
-  );
-}
-
 /* ─────────────────────────────────────────────
    HERO SECTION
 ───────────────────────────────────────────── */
@@ -837,8 +773,763 @@ function SuccessPage({ businessName, onNavigate }) {
           }}>Copy</button>
         </div>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <button className="c-btn-red" onClick={() => onNavigate("landing")}>Back to Home</button>
+          <button className="c-btn-red" onClick={() => onNavigate("dashboard")}>View Dashboard</button>
           <button className="c-btn-ghost" onClick={() => onNavigate("register")}>Create Another</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   BUSINESS DASHBOARD - Manage all businesses
+───────────────────────────────────────────── */
+function BusinessDashboard({ onNavigate }) {
+  const [businesses, setBusinesses] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [editModal, setEditModal] = useState(null); // { type: 'business'|'product', data: {...} }
+  const [productModal, setProductModal] = useState(null); // businessId for adding products
+  const [selectedBusiness, setSelectedBusiness] = useState(null); // for viewing products
+
+  // Check auth and load data
+  useEffect(() => {
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        window.location.href = "/Authentication/login";
+        return;
+      }
+      setCurrentUser(session.user);
+      await loadBusinesses(session.user.id);
+    };
+    init();
+  }, []);
+
+  const loadBusinesses = async (userId) => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("businesses")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error loading businesses:", error);
+    } else {
+      setBusinesses(data || []);
+    }
+    setLoading(false);
+  };
+
+  const loadProducts = async (businessId) => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error loading products:", error);
+    } else {
+      setProducts(data || []);
+    }
+  };
+
+  const deleteBusiness = async (id) => {
+    if (!confirm("Are you sure you want to delete this business? All products will also be deleted.")) return;
+    
+    const { error } = await supabase.from("businesses").delete().eq("id", id);
+    if (error) {
+      alert("Failed to delete: " + error.message);
+    } else {
+      setBusinesses(businesses.filter(b => b.id !== id));
+      if (selectedBusiness === id) setSelectedBusiness(null);
+    }
+  };
+
+  const deleteProduct = async (id) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) {
+      alert("Failed to delete: " + error.message);
+    } else {
+      setProducts(products.filter(p => p.id !== id));
+    }
+  };
+
+  const viewProducts = async (businessId) => {
+    setSelectedBusiness(businessId);
+    await loadProducts(businessId);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "2rem", marginBottom: 16 }}>⚡</div>
+          <p style={{ color: "var(--muted)" }}>Loading your businesses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-enter" style={{ minHeight: "100vh", background: "var(--bg)", paddingTop: 90, paddingBottom: 60 }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 48 }}>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "2.5rem", fontWeight: 800, marginBottom: 8 }}>
+            My <span style={{ color: "var(--red)" }}>Businesses</span>
+          </h1>
+          <p style={{ color: "var(--muted)", fontSize: "1rem" }}>
+            Manage your catalogs, products, and settings
+          </p>
+        </div>
+
+        {/* Action Bar */}
+        <div style={{ display: "flex", gap: 12, marginBottom: 32, flexWrap: "wrap" }}>
+          <button className="c-btn-red" onClick={() => onNavigate("register")}>
+            + Create New Business
+          </button>
+          {selectedBusiness && (
+            <>
+              <button className="c-btn-ghost" onClick={() => setProductModal(selectedBusiness)}>
+                + Add Product
+              </button>
+              <button className="c-btn-ghost" onClick={() => setSelectedBusiness(null)}>
+                ← Back to Businesses
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Business List or Product List */}
+        {!selectedBusiness ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
+            {businesses.length === 0 ? (
+              <div style={{
+                gridColumn: "1 / -1",
+                textAlign: "center",
+                padding: "80px 24px",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px dashed var(--border)",
+                borderRadius: 16
+              }}>
+                <div style={{ fontSize: "3rem", marginBottom: 16 }}>📦</div>
+                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.5rem", marginBottom: 8 }}>No businesses yet</h3>
+                <p style={{ color: "var(--muted)", marginBottom: 24 }}>Create your first catalog to get started</p>
+                <button className="c-btn-red" onClick={() => onNavigate("register")}>Create Business</button>
+              </div>
+            ) : (
+              businesses.map(business => (
+                <BusinessCard
+                  key={business.id}
+                  business={business}
+                  onEdit={() => setEditModal({ type: 'business', data: business })}
+                  onDelete={() => deleteBusiness(business.id)}
+                  onViewProducts={() => viewProducts(business.id)}
+                />
+              ))
+            )}
+          </div>
+        ) : (
+          <div>
+            <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.8rem", marginBottom: 24 }}>
+              Products for <span style={{ color: "var(--red)" }}>{businesses.find(b => b.id === selectedBusiness)?.business_name}</span>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24 }}>
+              {products.length === 0 ? (
+                <div style={{
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                  padding: "60px 24px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px dashed var(--border)",
+                  borderRadius: 16
+                }}>
+                  <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>🛍️</div>
+                  <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.3rem", marginBottom: 8 }}>No products yet</h3>
+                  <p style={{ color: "var(--muted)", marginBottom: 24 }}>Add your first product to this catalog</p>
+                  <button className="c-btn-red" onClick={() => setProductModal(selectedBusiness)}>Add Product</button>
+                </div>
+              ) : (
+                products.map(product => (
+                  <ProductCardDashboard
+                    key={product.id}
+                    product={product}
+                    onEdit={() => setEditModal({ type: 'product', data: product })}
+                    onDelete={() => deleteProduct(product.id)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Modals */}
+      {editModal && (
+        <EditModal
+          data={editModal}
+          onClose={() => setEditModal(null)}
+          onSave={async (updated) => {
+            if (editModal.type === 'business') {
+              const { error } = await supabase
+                .from("businesses")
+                .update(updated)
+                .eq("id", editModal.data.id);
+              
+              if (error) {
+                alert("Failed to update: " + error.message);
+              } else {
+                setBusinesses(businesses.map(b => b.id === editModal.data.id ? { ...b, ...updated } : b));
+                setEditModal(null);
+              }
+            } else {
+              const { error } = await supabase
+                .from("products")
+                .update(updated)
+                .eq("id", editModal.data.id);
+              
+              if (error) {
+                alert("Failed to update: " + error.message);
+              } else {
+                setProducts(products.map(p => p.id === editModal.data.id ? { ...p, ...updated } : p));
+                setEditModal(null);
+              }
+            }
+          }}
+        />
+      )}
+
+      {/* Add Product Modal */}
+      {productModal && (
+        <AddProductModal
+          businessId={productModal}
+          onClose={() => setProductModal(null)}
+          onAdd={async (productData) => {
+            const { data, error } = await supabase
+              .from("products")
+              .insert([{ ...productData, business_id: productModal }])
+              .select();
+            
+            if (error) {
+              alert("Failed to add product: " + error.message);
+            } else {
+              setProducts([...products, data[0]]);
+              setProductModal(null);
+            }
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── Business Card Component ── */
+function BusinessCard({ business, onEdit, onDelete, onViewProducts }) {
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.04)",
+      border: "1px solid var(--border)",
+      borderRadius: 16,
+      padding: 24,
+      transition: "transform 0.2s, box-shadow 0.2s",
+      cursor: "pointer"
+    }}
+    onMouseEnter={e => {
+      e.currentTarget.style.transform = "translateY(-4px)";
+      e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.4)";
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "none";
+    }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+        <div style={{
+          width: 48,
+          height: 48,
+          background: "var(--red-soft)",
+          border: "2px solid rgba(229,40,30,0.3)",
+          borderRadius: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "'Syne', sans-serif",
+          fontWeight: 700,
+          fontSize: "1.2rem",
+          color: "var(--red)"
+        }}>
+          {business.business_name?.charAt(0)?.toUpperCase() || "B"}
+        </div>
+        <div style={{ flex: 1 }}>
+          <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.2rem", fontWeight: 700, marginBottom: 2 }}>
+            {business.business_name}
+          </h3>
+          <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+            {new Date(business.created_at).toLocaleDateString()}
+          </div>
+        </div>
+      </div>
+
+      <p style={{
+        color: "var(--muted)",
+        fontSize: "0.9rem",
+        lineHeight: 1.6,
+        marginBottom: 16,
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden"
+      }}>
+        {business.description}
+      </p>
+
+      {(business.phone || business.whatsapp) && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+          {business.phone && (
+            <span style={{
+              fontSize: "0.75rem",
+              background: "rgba(100,150,255,0.12)",
+              color: "#7ea5ff",
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid rgba(100,150,255,0.2)"
+            }}>
+              📞 {business.phone}
+            </span>
+          )}
+          {business.whatsapp && (
+            <span style={{
+              fontSize: "0.75rem",
+              background: "rgba(37,211,102,0.12)",
+              color: "#4de88b",
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid rgba(37,211,102,0.2)"
+            }}>
+              💬 {business.whatsapp}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+        <button
+          onClick={onViewProducts}
+          style={{
+            flex: 1,
+            background: "var(--red)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            padding: "10px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'Outfit', sans-serif",
+            transition: "background 0.2s"
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = "#c9211a"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--red)"}
+        >
+          Manage Products
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(`/Catalog/${business.slug}`, '_blank');
+          }}
+          style={{
+            background: "rgba(37,211,102,0.12)",
+            color: "#4de88b",
+            border: "1px solid rgba(37,211,102,0.2)",
+            borderRadius: 8,
+            padding: "10px 14px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'Outfit', sans-serif",
+            transition: "background 0.2s"
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "rgba(37,211,102,0.2)";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "rgba(37,211,102,0.12)";
+          }}
+          title="View public catalog"
+        >
+          🌐
+        </button>
+      </div>
+      
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          style={{
+            flex: 1,
+            background: "rgba(100,150,255,0.12)",
+            color: "#7ea5ff",
+            border: "1px solid rgba(100,150,255,0.2)",
+            borderRadius: 8,
+            padding: "10px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'Outfit', sans-serif",
+            transition: "background 0.2s"
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(100,150,255,0.2)"}
+          onMouseLeave={e => e.currentTarget.style.background = "rgba(100,150,255,0.12)"}
+        >
+          ✏️ Edit
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          style={{
+            flex: 1,
+            background: "rgba(255,80,80,0.12)",
+            color: "#ff6b6b",
+            border: "1px solid rgba(255,80,80,0.2)",
+            borderRadius: 8,
+            padding: "10px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'Outfit', sans-serif",
+            transition: "background 0.2s"
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,80,80,0.2)"}
+          onMouseLeave={e => e.currentTarget.style.background = "rgba(255,80,80,0.12)"}
+        >
+          🗑️ Delete
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Product Card for Dashboard ── */
+function ProductCardDashboard({ product, onEdit, onDelete }) {
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.04)",
+      border: "1px solid var(--border)",
+      borderRadius: 14,
+      overflow: "hidden",
+      transition: "transform 0.2s"
+    }}
+    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"}
+    onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+    >
+      {product.image_url && (
+        <div style={{
+          width: "100%",
+          height: 180,
+          background: `url(${product.image_url}) center/cover`,
+          backgroundColor: "rgba(255,255,255,0.05)"
+        }} />
+      )}
+      <div style={{ padding: 16 }}>
+        <h4 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.1rem", fontWeight: 700, marginBottom: 8 }}>
+          {product.name}
+        </h4>
+        {product.description && (
+          <p style={{
+            color: "var(--muted)",
+            fontSize: "0.85rem",
+            lineHeight: 1.5,
+            marginBottom: 12,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden"
+          }}>
+            {product.description}
+          </p>
+        )}
+        {product.price && (
+          <div style={{
+            fontSize: "1.3rem",
+            fontWeight: 700,
+            color: "var(--red)",
+            marginBottom: 12,
+            fontFamily: "'Syne', sans-serif"
+          }}>
+            ₹{product.price}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={onEdit}
+            style={{
+              flex: 1,
+              background: "rgba(100,150,255,0.12)",
+              color: "#7ea5ff",
+              border: "1px solid rgba(100,150,255,0.2)",
+              borderRadius: 8,
+              padding: "8px",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "'Outfit', sans-serif"
+            }}
+          >
+            Edit
+          </button>
+          <button
+            onClick={onDelete}
+            style={{
+              flex: 1,
+              background: "rgba(255,80,80,0.12)",
+              color: "#ff6b6b",
+              border: "1px solid rgba(255,80,80,0.2)",
+              borderRadius: 8,
+              padding: "8px",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "'Outfit', sans-serif"
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Edit Modal ── */
+function EditModal({ data, onClose, onSave }) {
+  const [form, setForm] = useState(
+    data.type === 'business'
+      ? {
+          business_name: data.data.business_name || '',
+          description: data.data.description || '',
+          phone: data.data.phone || '',
+          whatsapp: data.data.whatsapp || ''
+        }
+      : {
+          name: data.data.name || '',
+          description: data.data.description || '',
+          price: data.data.price || '',
+          image_url: data.data.image_url || ''
+        }
+  );
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  return (
+    <div style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.8)",
+      backdropFilter: "blur(8px)",
+      zIndex: 1000,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24
+    }} onClick={onClose}>
+      <div style={{
+        background: "rgba(20,20,25,0.95)",
+        border: "1px solid var(--border)",
+        borderRadius: 20,
+        padding: 32,
+        maxWidth: 500,
+        width: "100%",
+        maxHeight: "90vh",
+        overflow: "auto"
+      }} onClick={e => e.stopPropagation()}>
+        <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.8rem", marginBottom: 24 }}>
+          Edit {data.type === 'business' ? 'Business' : 'Product'}
+        </h2>
+
+        {data.type === 'business' ? (
+          <>
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Business Name</span>
+              <input
+                className="c-input"
+                value={form.business_name}
+                onChange={e => set('business_name', e.target.value)}
+              />
+            </label>
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Description</span>
+              <textarea
+                className="c-input"
+                value={form.description}
+                onChange={e => set('description', e.target.value)}
+                rows={4}
+              />
+            </label>
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Phone</span>
+              <input
+                className="c-input"
+                value={form.phone}
+                onChange={e => set('phone', e.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+            <label style={{ display: "block", marginBottom: 24 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>WhatsApp</span>
+              <input
+                className="c-input"
+                value={form.whatsapp}
+                onChange={e => set('whatsapp', e.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+          </>
+        ) : (
+          <>
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Product Name</span>
+              <input
+                className="c-input"
+                value={form.name}
+                onChange={e => set('name', e.target.value)}
+              />
+            </label>
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Description</span>
+              <textarea
+                className="c-input"
+                value={form.description}
+                onChange={e => set('description', e.target.value)}
+                rows={3}
+              />
+            </label>
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Price (₹)</span>
+              <input
+                className="c-input"
+                type="number"
+                value={form.price}
+                onChange={e => set('price', e.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+            <label style={{ display: "block", marginBottom: 24 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Image URL</span>
+              <input
+                className="c-input"
+                value={form.image_url}
+                onChange={e => set('image_url', e.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+          </>
+        )}
+
+        <div style={{ display: "flex", gap: 12 }}>
+          <button className="c-btn-red" onClick={() => onSave(form)} style={{ flex: 1 }}>
+            Save Changes
+          </button>
+          <button className="c-btn-ghost" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Add Product Modal ── */
+function AddProductModal({ businessId, onClose, onAdd }) {
+  const [form, setForm] = useState({ name: '', description: '', price: '', image_url: '' });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  return (
+    <div style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.8)",
+      backdropFilter: "blur(8px)",
+      zIndex: 1000,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24
+    }} onClick={onClose}>
+      <div style={{
+        background: "rgba(20,20,25,0.95)",
+        border: "1px solid var(--border)",
+        borderRadius: 20,
+        padding: 32,
+        maxWidth: 500,
+        width: "100%",
+        maxHeight: "90vh",
+        overflow: "auto"
+      }} onClick={e => e.stopPropagation()}>
+        <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.8rem", marginBottom: 24 }}>
+          Add New Product
+        </h2>
+
+        <label style={{ display: "block", marginBottom: 16 }}>
+          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Product Name *</span>
+          <input
+            className="c-input"
+            value={form.name}
+            onChange={e => set('name', e.target.value)}
+            placeholder="Enter product name"
+          />
+        </label>
+        <label style={{ display: "block", marginBottom: 16 }}>
+          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Description</span>
+          <textarea
+            className="c-input"
+            value={form.description}
+            onChange={e => set('description', e.target.value)}
+            placeholder="Describe your product"
+            rows={3}
+          />
+        </label>
+        <label style={{ display: "block", marginBottom: 16 }}>
+          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Price (₹)</span>
+          <input
+            className="c-input"
+            type="number"
+            value={form.price}
+            onChange={e => set('price', e.target.value)}
+            placeholder="0.00"
+          />
+        </label>
+        <label style={{ display: "block", marginBottom: 24 }}>
+          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Image URL</span>
+          <input
+            className="c-input"
+            value={form.image_url}
+            onChange={e => set('image_url', e.target.value)}
+            placeholder="https://example.com/image.jpg"
+          />
+        </label>
+
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            className="c-btn-red"
+            onClick={() => {
+              if (!form.name.trim()) {
+                alert("Product name is required");
+                return;
+              }
+              onAdd(form);
+            }}
+            style={{ flex: 1 }}
+          >
+            Add Product
+          </button>
+          <button className="c-btn-ghost" onClick={onClose}>
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -853,7 +1544,22 @@ function RegisterPage({ onNavigate }) {
   const [errors, setErrors] = useState({});
   const [logoPreview, setLogoPreview] = useState(null);
   const [page, setPage] = useState("form");
+  const [currentUser, setCurrentUser] = useState(null);
   const fileRef = useRef(null);
+
+  // Check if user is logged in when component mounts
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setCurrentUser(session.user);
+        console.log("User is logged in:", session.user.email);
+      } else {
+        console.log("User is not logged in");
+      }
+    };
+    checkAuth();
+  }, []);
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); if (errors[k]) setErrors(e => ({ ...e, [k]: null })); };
 
@@ -864,21 +1570,62 @@ function RegisterPage({ onNavigate }) {
     return e;
   };
 
+  // Generate URL-friendly slug from business name
+  const generateSlug = (name) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-')          // Replace spaces with hyphens
+      .replace(/-+/g, '-')           // Replace multiple hyphens with single
+      .replace(/^-|-$/g, '');        // Remove leading/trailing hyphens
+  };
+
   const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
     
     // Save to Supabase
     try {
-      // Get authenticated user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      // First check if there's a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (authError || !user) {
+      if (sessionError || !session) {
         setErrors({ businessName: "You must be logged in to create a business. Please sign up or log in first." });
+        // Redirect to login
+        setTimeout(() => window.location.href = "/Authentication/login", 2000);
         return;
       }
 
-      // Insert business record
+      // Get the user from the session
+      const user = session.user;
+      
+      if (!user) {
+        setErrors({ businessName: "Session found but user not available. Please log in again." });
+        setTimeout(() => window.location.href = "/Authentication/login", 2000);
+        return;
+      }
+
+      // Generate slug and check for uniqueness
+      let slug = generateSlug(form.businessName);
+      let slugAttempt = 1;
+      let finalSlug = slug;
+
+      // Check if slug already exists
+      while (true) {
+        const { data: existingBusiness } = await supabase
+          .from("businesses")
+          .select("id")
+          .eq("slug", finalSlug)
+          .single();
+
+        if (!existingBusiness) break; // Slug is unique
+
+        // Slug exists, append number
+        slugAttempt++;
+        finalSlug = `${slug}-${slugAttempt}`;
+      }
+
+      // Insert business record with slug
       const { error: insertError } = await supabase
         .from("businesses")
         .insert([{
@@ -886,7 +1633,8 @@ function RegisterPage({ onNavigate }) {
           description: form.description.trim(),
           phone: form.phone?.trim() || null,
           whatsapp: form.whatsapp?.trim() || null,
-          user_id: user.id
+          user_id: user.id,
+          slug: finalSlug
         }]);
 
       if (insertError) {
@@ -938,6 +1686,20 @@ function RegisterPage({ onNavigate }) {
           boxShadow: "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(229,40,30,0.06)"
         }}>
           <div style={{ textAlign: "center", marginBottom: 36 }}>
+            {/* Logged in indicator */}
+            {currentUser && (
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                background: "rgba(40,200,80,0.12)", border: "1px solid rgba(40,200,80,0.25)",
+                borderRadius: 100, padding: "5px 14px",
+                fontSize: "0.7rem", letterSpacing: "0.08em",
+                color: "#28c850", fontWeight: 600, marginBottom: 16
+              }}>
+                <span style={{ width: 5, height: 5, background: "#28c850", borderRadius: "50%" }} />
+                Logged in as {currentUser.email}
+              </div>
+            )}
+            
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               background: "var(--red-soft)", border: "1px solid rgba(229,40,30,0.2)",
@@ -1032,6 +1794,7 @@ export default function App() {
       <div key={key}>
         {page === "landing" && <LandingPage onNavigate={navigate} />}
         {page === "register" && <RegisterPage onNavigate={navigate} />}
+        {page === "dashboard" && <BusinessDashboard onNavigate={navigate} />}
       </div>
     </>
   );
