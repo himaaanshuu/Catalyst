@@ -541,26 +541,26 @@ const prodBgs = ["#1a0a0a","#0a0a1a","#0a1a0a","#1a1a0a","#1a0a0f","#0a1a1a"];
 function ProductCard({ name, price, emoji, cat, idx }) {
   return (
     <div className="product-card">
-      <div style={{
-        height: 160,
-        background: `radial-gradient(circle at 50% 60%, ${prodBgs[idx % prodBgs.length]} 0%, #0d0d10 100%)`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "3.5rem", position: "relative", overflow: "hidden"
-      }}>
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4))" }} />
-        <span style={{ position: "relative", zIndex: 1 }}>{emoji}</span>
-        <span style={{
-          position: "absolute", top: 10, right: 10,
-          fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase",
-          background: "rgba(0,0,0,0.6)", color: "var(--muted)",
-          padding: "3px 8px", borderRadius: 100, border: "1px solid var(--border)"
-        }}>{cat}</span>
-      </div>
-      <div style={{ padding: "14px 16px" }}>
-        <div style={{ fontWeight: 600, fontSize: "0.88rem", marginBottom: 4 }}>{name}</div>
-        <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "1rem", fontWeight: 700, color: "var(--red)", marginBottom: 12 }}>{price}</div>
-        <button className="wa-btn">💬 Inquire on WhatsApp</button>
-      </div>
+        <div style={{
+          height: 160,
+          background: `radial-gradient(circle at 50% 60%, ${prodBgs[idx % prodBgs.length]} 0%, #0d0d10 100%)`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "3.5rem", position: "relative", overflow: "hidden"
+        }}>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4))" }} />
+          <span style={{ position: "relative", zIndex: 1 }}>{emoji}</span>
+          <span style={{
+            position: "absolute", top: 10, right: 10,
+            fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase",
+            background: "rgba(0,0,0,0.6)", color: "var(--muted)",
+            padding: "3px 8px", borderRadius: 100, border: "1px solid var(--border)"
+          }}>{cat}</span>
+        </div>
+        <div style={{ padding: "14px 16px" }}>
+          <div style={{ fontWeight: 600, fontSize: "0.88rem", marginBottom: 4 }}>{name}</div>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: "1rem", fontWeight: 700, color: "var(--red)", marginBottom: 12 }}>{price}</div>
+          <button className="wa-btn">💬 Inquire on WhatsApp</button>
+        </div>
     </div>
   );
 }
