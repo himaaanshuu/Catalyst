@@ -1,6 +1,7 @@
 import "./globals.css";
+import { getSiteUrl } from "../Library/siteUrl";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+const siteUrl = getSiteUrl();
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
