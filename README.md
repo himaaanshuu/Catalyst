@@ -19,6 +19,7 @@
 - [Environment Variables](#-environment-variables)
 - [Common Issues & Solutions](#-common-issues--solutions)
 - [Deployment](#-deployment)
+- [Currently Working On](#-currently-working-on)
 - [Future Roadmap](#-future-roadmap)
 - [Contributing](#-contributing)
 
@@ -40,6 +41,9 @@
 - 📊 **Business Dashboard** - View all businesses and products in one place
 - 🌐 **Public Catalog Pages** - Each business gets a unique, shareable URL
 - ⚙️ **Settings Management** - Update profile and business information
+- 🎨 **Template Selection** - Choose from curated catalog templates during business setup
+- 🖼️ **Template Previews** - Real visual preview thumbnails for each template
+- 🔗 **Stable Public Links** - Normalized lowercase `/catalog/:slug` links for easier sharing
 
 ### For Customers
 - 🛍️ **Beautiful Product Display** - Mobile-first, responsive catalog pages
@@ -54,6 +58,9 @@
 - 🏃 **Fast Performance** - Optimized loading and caching
 - 🌍 **SEO-Friendly URLs** - Clean slugs like `/catalog/your-business`
 - 🔄 **Real-time Updates** - Instant sync across devices
+- 🧩 **Shared Template Registry** - Centralized template config in `src/Library/catalogTemplates.js`
+- 🗺️ **SEO Metadata Routes** - Dynamic `robots.txt` and `sitemap.xml` support
+- 🌐 **EN/HI Language Toggle** - Hindi and English toggle on key landing/dashboard views
 
 ---
 
@@ -408,14 +415,24 @@ After deployment, update:
 
 ---
 
+## 🚧 Currently Working On
+
+- Production deployment hardening and environment validation
+- Finalizing live-domain link flow and share reliability checks
+- Public catalog polish (error states, missing-business UX, loading experience)
+- End-to-end QA for template-driven catalog generation
+- Lint cleanup and code quality pass before broader release
+
+---
+
 ## 🔮 Future Roadmap
 
-### Phase 1: Core Enhancements
-- [ ] Image upload to Supabase Storage
-- [ ] Product categories and filtering
+### Phase 1: Near-Term Enhancements
+- [ ] Image upload to Supabase Storage (replace external-only image URLs)
+- [ ] Product categories and category-level filtering
 - [ ] Bulk product import (CSV)
-- [ ] Business logo upload
-- [ ] Email verification for signup
+- [ ] PDF export for public catalogs
+- [ ] Better public catalog 404 and "business not found" UX
 
 ### Phase 2: Business Features
 - [ ] Analytics dashboard (views, clicks, orders)
@@ -427,7 +444,7 @@ After deployment, update:
 ### Phase 3: Advanced Features
 - [ ] Custom domains for catalogs
 - [ ] Theme customization (colors, fonts)
-- [ ] Multi-language support
+- [ ] Full multi-language coverage for all pages/components
 - [ ] Payment integration (Stripe, Razorpay)
 - [ ] QR code generation
 - [ ] Team collaboration
@@ -512,7 +529,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚡ Known Limitations
 
-### Current Version (v0.1.0)
+### Current Version (v0.2.0)
 
 1. **Image Storage**
    - Products use external image URLs only

@@ -1,0 +1,26 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Organic and Natural template preview">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1710"/>
+      <stop offset="100%" stop-color="#132218"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#68d391"/>
+      <stop offset="100%" stop-color="#42a36a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <circle cx="146" cy="126" r="88" fill="#68d391" opacity="0.2"/>
+  <circle cx="1050" cy="682" r="130" fill="#68d391" opacity="0.16"/>
+  <rect x="80" y="72" width="1040" height="76" rx="16" fill="#1e3626"/>
+  <rect x="116" y="98" width="246" height="24" rx="9" fill="url(#leaf)"/>
+  <rect x="80" y="178" width="520" height="252" rx="20" fill="#1a3022"/>
+  <rect x="112" y="218" width="300" height="26" rx="10" fill="#ecfff3"/>
+  <rect x="112" y="256" width="430" height="14" rx="7" fill="#a2d8b8"/>
+  <rect x="112" y="280" width="360" height="14" rx="7" fill="#a2d8b8" opacity="0.74"/>
+  <rect x="112" y="324" width="190" height="42" rx="10" fill="url(#leaf)"/>
+  <rect x="626" y="178" width="494" height="252" rx="20" fill="#213928"/>
+  <rect x="80" y="460" width="330" height="262" rx="16" fill="#1c3224"/>
+  <rect x="435" y="460" width="330" height="262" rx="16" fill="#1c3224"/>
+  <rect x="790" y="460" width="330" height="262" rx="16" fill="#1c3224"/>
+</svg>

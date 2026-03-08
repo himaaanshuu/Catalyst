@@ -12,6 +12,16 @@ const nextConfig = {
   
   /* Production optimization */
   reactStrictMode: true,
+
+  /* Route compatibility: allow lowercase catalog links */
+  async rewrites() {
+    return [
+      {
+        source: '/catalog/:path*',
+        destination: '/Catalog/:path*',
+      },
+    ];
+  },
   
   /* Security headers */
   async headers() {

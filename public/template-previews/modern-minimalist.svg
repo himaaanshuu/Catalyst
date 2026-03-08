@@ -1,0 +1,26 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Modern Minimalist template preview">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f0f11"/>
+      <stop offset="100%" stop-color="#1b1b20"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e5281e"/>
+      <stop offset="100%" stop-color="#ff6b5c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <rect x="80" y="72" width="1040" height="72" rx="16" fill="#24252d"/>
+  <rect x="108" y="94" width="180" height="28" rx="8" fill="url(#accent)"/>
+  <rect x="916" y="96" width="176" height="24" rx="12" fill="#3a3b47"/>
+  <rect x="80" y="176" width="620" height="272" rx="24" fill="#20212a"/>
+  <rect x="116" y="222" width="272" height="20" rx="10" fill="#f5f3ef" opacity="0.95"/>
+  <rect x="116" y="260" width="452" height="14" rx="7" fill="#a8a8b3" opacity="0.85"/>
+  <rect x="116" y="286" width="392" height="14" rx="7" fill="#a8a8b3" opacity="0.65"/>
+  <rect x="116" y="334" width="182" height="42" rx="10" fill="url(#accent)"/>
+  <rect x="730" y="176" width="390" height="272" rx="24" fill="#2b2c36"/>
+  <circle cx="925" cy="312" r="86" fill="#e5281e" opacity="0.18"/>
+  <rect x="80" y="488" width="330" height="232" rx="18" fill="#252631"/>
+  <rect x="435" y="488" width="330" height="232" rx="18" fill="#252631"/>
+  <rect x="790" y="488" width="330" height="232" rx="18" fill="#252631"/>
+</svg>

@@ -4,11 +4,47 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/Library/Supabase";
 import { useRouter } from "next/navigation";
 
-export default function Navbar({ onNavigate, transparent = false }) {
+const NAV_I18N = {
+  en: {
+    features: "Features",
+    templates: "Templates",
+    howToGenerate: "How to Generate",
+    dashboard: "Dashboard",
+    settings: "Settings",
+    signOut: "Sign Out",
+    login: "Login",
+    language: "Language"
+  },
+  hi: {
+    features: "फीचर्स",
+    templates: "टेम्पलेट्स",
+    howToGenerate: "कैसे बनाएं",
+    dashboard: "डैशबोर्ड",
+    settings: "सेटिंग्स",
+    signOut: "साइन आउट",
+    login: "लॉगिन",
+    language: "भाषा"
+  }
+};
+
+export default function Navbar({ onNavigate, transparent = false, lang: controlledLang, onLangChange }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [internalLang, setInternalLang] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.localStorage.getItem("catalogLang") || "en";
+    }
+    return "en";
+  });
+  const lang = controlledLang || internalLang;
   const dropdownRef = useRef(null);
+  const t = NAV_I18N[lang] || NAV_I18N.en;
+
+  const updateLanguage = (nextLang) => {
+    if (onLangChange) onLangChange(nextLang);
+    setInternalLang(nextLang);
+  };
 
   useEffect(() => {
     // Get current user
@@ -25,6 +61,13 @@ export default function Navbar({ onNavigate, transparent = false }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("catalogLang", lang);
+      document.documentElement.lang = lang;
+    }
+  }, [lang]);
 
   useEffect(() => {
     // Close dropdown when clicking outside
@@ -95,7 +138,7 @@ export default function Navbar({ onNavigate, transparent = false }) {
           }}
         >
           <span style={{ width: 6, height: 6, background: "var(--red)", borderRadius: "50%", animation: "glowPulse 2s infinite" }} />
-          Features
+          {t.features}
         </button>
 
         {/* Templates Button */}
@@ -120,7 +163,7 @@ export default function Navbar({ onNavigate, transparent = false }) {
           }}
         >
           <span style={{ width: 6, height: 6, background: "var(--red)", borderRadius: "50%", animation: "glowPulse 2s infinite" }} />
-          Templates
+          {t.templates}
         </button>
 
         {/* How to Generate */}
@@ -145,12 +188,31 @@ export default function Navbar({ onNavigate, transparent = false }) {
           }}
         >
           <span style={{ width: 6, height: 6, background: "var(--red)", borderRadius: "50%", animation: "glowPulse 2s infinite" }} />
-          How to Generate
+          {t.howToGenerate}
         </button>
       </div>
 
       {/* Auth Buttons / User Profile */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{t.language}</span>
+          <select
+            value={lang}
+            onChange={(e) => updateLanguage(e.target.value)}
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              color: "var(--white)",
+              padding: "6px 8px",
+              fontSize: "0.78rem"
+            }}
+          >
+            <option value="en">EN</option>
+            <option value="hi">HI</option>
+          </select>
+        </label>
+
         {user ? (
           <div style={{ position: "relative" }} ref={dropdownRef}>
             {/* User Profile Button */}
@@ -284,7 +346,7 @@ export default function Navbar({ onNavigate, transparent = false }) {
                     <rect x="14" y="14" width="7" height="7"></rect>
                     <rect x="3" y="14" width="7" height="7"></rect>
                   </svg>
-                  Dashboard
+                  {t.dashboard}
                 </button>
 
                 <button
@@ -315,7 +377,7 @@ export default function Navbar({ onNavigate, transparent = false }) {
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"></path>
                   </svg>
-                  Settings
+                  {t.settings}
                 </button>
 
                 <div style={{ height: 1, background: "var(--border)", margin: "8px 0" }} />
@@ -347,7 +409,7 @@ export default function Navbar({ onNavigate, transparent = false }) {
                     <polyline points="16 17 21 12 16 7"></polyline>
                     <line x1="21" y1="12" x2="9" y2="12"></line>
                   </svg>
-                  Sign Out
+                  {t.signOut}
                 </button>
               </div>
             )}
@@ -358,7 +420,7 @@ export default function Navbar({ onNavigate, transparent = false }) {
               className="c-btn-ghost" 
               style={{ padding: "9px 20px", fontSize: "0.85rem" }}
               onClick={() => router.push("/Authentication/login")}
-            >Login</button>
+            >{t.login}</button>
 
           </>
         )}

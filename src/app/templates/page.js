@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Component/Navbar";
+import { CATALOG_TEMPLATES } from "@/Library/catalogTemplates";
 
 const GlobalStyles = () => (
   <style>{`
@@ -73,44 +74,10 @@ const GlobalStyles = () => (
 export default function TemplatesPage() {
   const router = useRouter();
 
-  const templates = [
-    {
-      name: "Modern Minimalist",
-      description: "Clean and elegant design perfect for fashion, jewelry, and lifestyle products.",
-      image: "🎨",
-      color: "#e5281e"
-    },
-    {
-      name: "Bold & Vibrant",
-      description: "Eye-catching layouts ideal for food, restaurants, and creative businesses.",
-      image: "🍕",
-      color: "#FF6B35"
-    },
-    {
-      name: "Professional",
-      description: "Corporate-friendly design for B2B services, consulting, and professional products.",
-      image: "💼",
-      color: "#4ECDC4"
-    },
-    {
-      name: "Elegant Luxury",
-      description: "Premium aesthetic for high-end products, boutiques, and luxury brands.",
-      image: "💎",
-      color: "#FFD700"
-    },
-    {
-      name: "Tech & Gadgets",
-      description: "Modern tech-focused design for electronics, gadgets, and digital products.",
-      image: "📱",
-      color: "#667EEA"
-    },
-    {
-      name: "Organic & Natural",
-      description: "Earth-toned template for organic products, wellness, and eco-friendly businesses.",
-      image: "🌿",
-      color: "#68D391"
-    }
-  ];
+  const handleUseTemplate = (templateKey) => {
+    window.localStorage.setItem("selectedCatalogTemplate", templateKey);
+    router.push("/dashboard/business?start=register");
+  };
 
   return (
     <>
@@ -169,19 +136,39 @@ export default function TemplatesPage() {
             gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
             gap: 32
           }}>
-            {templates.map((template, idx) => (
-              <div key={idx} className="template-card">
+            {CATALOG_TEMPLATES.map((template) => (
+              <div key={template.key} className="template-card">
                 {/* Preview */}
                 <div style={{
                   height: 240,
                   background: `linear-gradient(135deg, ${template.color}15 0%, ${template.color}05 100%)`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "5rem",
+                  position: "relative",
                   borderBottom: "1px solid var(--border)"
                 }}>
-                  {template.image}
+                  <img
+                    src={template.previewImage}
+                    alt={`${template.name} template preview`}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block"
+                    }}
+                  />
+                  <div style={{
+                    position: "absolute",
+                    top: 12,
+                    left: 12,
+                    background: "rgba(6,6,8,0.72)",
+                    border: "1px solid var(--border)",
+                    color: "var(--white)",
+                    borderRadius: 999,
+                    padding: "4px 10px",
+                    fontSize: "0.78rem",
+                    fontWeight: 600
+                  }}>
+                    {template.emoji}
+                  </div>
                 </div>
 
                 {/* Info */}
@@ -227,6 +214,25 @@ export default function TemplatesPage() {
                     }} />
                     Available
                   </div>
+
+                  <button
+                    onClick={() => handleUseTemplate(template.key)}
+                    style={{
+                      marginTop: 16,
+                      width: "100%",
+                      background: "var(--red)",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "10px 14px",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      fontFamily: "'Outfit', sans-serif"
+                    }}
+                  >
+                    Use This Template
+                  </button>
                 </div>
               </div>
             ))}

@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-03-08
+
+### ✨ Features Added
+
+#### Catalog Templates
+- Added centralized template registry in `src/Library/catalogTemplates.js`
+- Added template selection during business creation/edit flows
+- Added visual template preview assets in `public/template-previews/`
+- Added template checklist document: `CATALOG_TEMPLATE_CHECKLIST.md`
+
+#### Public Catalog & Links
+- Standardized public catalog links to lowercase `/catalog/:slug`
+- Added compatibility rewrite from `/catalog/*` to `/Catalog/*` in Next config
+- Improved success/dashboard link generation and copy-link behavior
+
+#### SEO & Metadata
+- Added dynamic `robots.txt` via `src/app/robots.js`
+- Added dynamic `sitemap.xml` via `src/app/sitemap.js`
+
+#### Localization
+- Added English/Hindi language toggle coverage for key dashboard/landing flows
+
+#### Database
+- Added migration script `add_business_template_key.sql` for `businesses.template_key`
+
+### 🔧 Configuration Changes
+- Supabase client now uses env variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) and throws a clear error when missing
+
+---
+
 ## [0.1.0] - 2026-03-07
 
 ### 🎉 Initial Release
@@ -127,7 +157,7 @@ First public release of Catalyst - Product Catalog SaaS Platform.
 ### Version Numbering
 
 - **MAJOR** version (1.0.0) - Incompatible API changes
-- **MINOR** version (0.1.0) - New features (backwards compatible)
+- **MINOR** version (0.2.0) - New features (backwards compatible)
 - **PATCH** version (0.0.1) - Bug fixes (backwards compatible)
 
 ### Release Notes Format

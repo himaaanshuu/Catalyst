@@ -3,6 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/Library/Supabase";
 import Navbar from "@/app/Component/Navbar";
+import {
+  CATALOG_TEMPLATES,
+  DEFAULT_TEMPLATE_KEY,
+  getTemplateByKey
+} from "@/Library/catalogTemplates";
 
 /* ─────────────────────────────────────────────
    GLOBAL STYLES
@@ -216,6 +221,10 @@ function useReveal() {
   return ref;
 }
 
+function tr(lang, enText, hiText) {
+  return lang === "hi" ? hiText : enText;
+}
+
 /* ─────────────────────────────────────────────
    BRAND WORDMARK
 ───────────────────────────────────────────── */
@@ -331,9 +340,9 @@ function HeroBG() {
 /* ─────────────────────────────────────────────
    HERO SECTION
 ───────────────────────────────────────────── */
-function HeroSection({ onNavigate }) {
+function HeroSection({ onNavigate, lang }) {
   const [activeWord, setActiveWord] = useState(null);
-  const words = ["Build.", "Scale.", "Succeed."];
+  const words = lang === "hi" ? ["बनाएं.", "बढ़ाएं.", "सफल हों."] : ["Build.", "Scale.", "Succeed."];
 
   const handleWordClick = (word) => {
     setActiveWord(word);
@@ -365,7 +374,7 @@ function HeroSection({ onNavigate }) {
           color: "#e5281e", marginBottom: 32
         }}>
           <span style={{ width: 6, height: 6, background: "#e5281e", borderRadius: "50%", animation: "glowPulse 2s infinite" }} />
-          Now in Beta
+          {tr(lang, "Now in Beta", "बीटा में उपलब्ध")}
         </div>
 
         {/* Headline — clickable words */}
@@ -410,8 +419,8 @@ function HeroSection({ onNavigate }) {
           fontWeight: 300, lineHeight: 1.7, color: "var(--muted)",
           maxWidth: 520, margin: "0 auto 48px", letterSpacing: "0.01em"
         }}>
-          Create a professional product catalog for your business<br />
-          in seconds. No code. No design skills needed.
+          {tr(lang, "Create a professional product catalog for your business", "अपने व्यवसाय के लिए प्रोफेशनल प्रोडक्ट कैटलॉग बनाएं")}<br />
+          {tr(lang, "in seconds. No code. No design skills needed.", "कुछ सेकंड में। बिना कोड। बिना डिजाइन स्किल्स।")}
         </p>
 
         {/* Single primary CTA — See Demo removed */}
@@ -420,7 +429,7 @@ function HeroSection({ onNavigate }) {
             style={{ fontSize: "1rem", padding: "16px 40px" }}
             onClick={() => onNavigate("register")}
           >
-            Create Your Catalyst →
+            {tr(lang, "Create Your Catalyst", "अपना Catalyst बनाएं")} →
           </button>
         </div>
 
@@ -438,7 +447,7 @@ function HeroSection({ onNavigate }) {
             ))}
           </div>
           <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
-            Trusted by <strong style={{ color: "var(--white)" }}>12,000+</strong> businesses worldwide
+            {tr(lang, "Trusted by", "दुनिया भर में भरोसा किया गया")} <strong style={{ color: "var(--white)" }}>12,000+</strong> {tr(lang, "businesses worldwide", "व्यवसायों द्वारा")}
           </span>
         </div>
       </div>
@@ -454,12 +463,12 @@ function HeroSection({ onNavigate }) {
 /* ─────────────────────────────────────────────
    FEATURES — How to Generate section
 ───────────────────────────────────────────── */
-function FeaturesSection({ onNavigate }) {
+function FeaturesSection({ onNavigate, lang }) {
   const ref = useReveal();
   const features = [
-    { icon: "⬆", title: "Add Your Products", desc: "Upload products, descriptions and high-res images in seconds. Drag, drop, done.", tag: "Upload" },
-    { icon: "◈", title: "Choose Catalog Style", desc: "Select from 20+ modern, conversion-optimized catalog templates built for your industry.", tag: "Design" },
-    { icon: "⚡", title: "Generate Your Catalog", desc: "Instantly create a shareable, SEO-ready catalog website — live in under 60 seconds.", tag: "Deploy" }
+    { icon: "⬆", title: tr(lang, "Add Your Products", "अपने प्रोडक्ट जोड़ें"), desc: tr(lang, "Upload products, descriptions and high-res images in seconds. Drag, drop, done.", "कुछ सेकंड में प्रोडक्ट, विवरण और इमेज अपलोड करें।"), tag: tr(lang, "Upload", "अपलोड") },
+    { icon: "◈", title: tr(lang, "Choose Catalog Style", "कैटलॉग स्टाइल चुनें"), desc: tr(lang, "Select from 20+ modern, conversion-optimized catalog templates built for your industry.", "अपने उद्योग के लिए आधुनिक टेम्पलेट चुनें।"), tag: tr(lang, "Design", "डिज़ाइन") },
+    { icon: "⚡", title: tr(lang, "Generate Your Catalog", "अपना कैटलॉग जनरेट करें"), desc: tr(lang, "Instantly create a shareable, SEO-ready catalog website — live in under 60 seconds.", "60 सेकंड से कम समय में शेयर करने योग्य कैटलॉग वेबसाइट बनाएं।"), tag: tr(lang, "Deploy", "डिप्लॉय") }
   ];
 
   return (
@@ -469,7 +478,7 @@ function FeaturesSection({ onNavigate }) {
         <div style={{
           display: "inline-block", fontSize: "0.72rem", letterSpacing: "0.18em",
           textTransform: "uppercase", color: "var(--red)", fontWeight: 600, marginBottom: 14
-        }}>How It Works</div>
+        }}>{tr(lang, "How It Works", "यह कैसे काम करता है")}</div>
 
         <h2 style={{
           fontFamily: "'Syne', sans-serif",
@@ -477,8 +486,8 @@ function FeaturesSection({ onNavigate }) {
           fontWeight: 800, letterSpacing: "-0.03em",
           color: "var(--white)", lineHeight: 1.1, marginBottom: 28
         }}>
-          Three steps to your<br />
-          <span style={{ color: "var(--red)" }}>perfect catalog.</span>
+          {tr(lang, "Three steps to your", "आपके लिए 3 आसान कदम")}<br />
+          <span style={{ color: "var(--red)" }}>{tr(lang, "perfect catalog.", "परफेक्ट कैटलॉग।")}</span>
         </h2>
 
         {/* Generate button — at the TOP of the section as requested */}
@@ -487,7 +496,7 @@ function FeaturesSection({ onNavigate }) {
           style={{ fontSize: "0.95rem", padding: "13px 32px" }}
           onClick={() => onNavigate("register")}
         >
-          ⚡ Generate Your Catalog Now
+          ⚡ {tr(lang, "Generate Your Catalog Now", "अभी कैटलॉग बनाएं")}
         </button>
       </div>
 
@@ -565,7 +574,7 @@ function ProductCard({ name, price, emoji, cat, idx }) {
   );
 }
 
-function PreviewSection() {
+function PreviewSection({ lang }) {
   const ref = useReveal();
   return (
     <section style={{ padding: "80px 48px 100px", background: "linear-gradient(to bottom, transparent, rgba(229,40,30,0.04), transparent)" }}>
@@ -574,13 +583,13 @@ function PreviewSection() {
           <div style={{
             display: "inline-block", fontSize: "0.72rem", letterSpacing: "0.18em",
             textTransform: "uppercase", color: "var(--red)", fontWeight: 600, marginBottom: 16
-          }}>Live Preview</div>
+          }}>{tr(lang, "Live Preview", "लाइव प्रीव्यू")}</div>
           <h2 style={{
             fontFamily: "'Syne', sans-serif",
             fontSize: "clamp(2rem, 4vw, 3rem)",
             fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.1
           }}>
-            What your catalog<br /><span style={{ color: "var(--red)" }}>will look like.</span>
+            {tr(lang, "What your catalog", "आपका कैटलॉग")}<br /><span style={{ color: "var(--red)" }}>{tr(lang, "will look like.", "कैसा दिखेगा।")}</span>
           </h2>
         </div>
 
@@ -624,7 +633,7 @@ function PreviewSection() {
 /* ─────────────────────────────────────────────
    FOOTER
 ───────────────────────────────────────────── */
-function Footer() {
+function Footer({ lang }) {
   return (
     <footer style={{
       borderTop: "1px solid transparent",
@@ -636,7 +645,7 @@ function Footer() {
     }}>
       <BrandMark />
       <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-        {["About", "Privacy", "Contact", "Twitter", "GitHub"].map(l => (
+        {[tr(lang, "About", "हमारे बारे में"), tr(lang, "Privacy", "प्राइवेसी"), tr(lang, "Contact", "संपर्क"), "Twitter", "GitHub"].map(l => (
           <button key={l} style={{
             background: "none", border: "none", cursor: "pointer",
             color: "var(--muted)", fontSize: "0.82rem",
@@ -648,7 +657,7 @@ function Footer() {
         ))}
       </div>
       <div style={{ fontSize: "0.72rem", color: "rgba(245,243,239,0.2)" }}>
-        © {new Date().getFullYear()} Catalyst. All rights reserved.
+        © {new Date().getFullYear()} Catalyst. {tr(lang, "All rights reserved.", "सर्वाधिकार सुरक्षित।")}
       </div>
     </footer>
   );
@@ -657,13 +666,13 @@ function Footer() {
 /* ─────────────────────────────────────────────
    LANDING PAGE
 ───────────────────────────────────────────── */
-function LandingPage({ onNavigate }) {
+function LandingPage({ onNavigate, lang }) {
   return (
     <div className="page-enter">
-      <HeroSection onNavigate={onNavigate} />
-      <FeaturesSection onNavigate={onNavigate} />
-      <PreviewSection />
-      <Footer />
+      <HeroSection onNavigate={onNavigate} lang={lang} />
+      <FeaturesSection onNavigate={onNavigate} lang={lang} />
+      <PreviewSection lang={lang} />
+      <Footer lang={lang} />
     </div>
   );
 }
@@ -671,12 +680,12 @@ function LandingPage({ onNavigate }) {
 /* ─────────────────────────────────────────────
    CATALOG CREATION ANIMATION
 ───────────────────────────────────────────── */
-function CatalogCreating({ businessName, onDone }) {
+function CatalogCreating({ businessName, onDone, lang }) {
   const [step, setStep] = useState(0);
   const steps = [
-    "Initializing workspace…", "Processing business profile…",
-    "Selecting optimal template…", "Generating product pages…",
-    "Deploying to Catalyst CDN…", "Your catalog is live! 🎉"
+    tr(lang, "Initializing workspace...", "वर्कस्पेस तैयार हो रहा है..."), tr(lang, "Processing business profile...", "बिजनेस प्रोफाइल प्रोसेस हो रही है..."),
+    tr(lang, "Selecting optimal template...", "सबसे अच्छा टेम्पलेट चुना जा रहा है..."), tr(lang, "Generating product pages...", "प्रोडक्ट पेज बनाए जा रहे हैं..."),
+    tr(lang, "Deploying to Catalyst CDN...", "Catalyst CDN पर डिप्लॉय हो रहा है..."), tr(lang, "Your catalog is live!", "आपका कैटलॉग लाइव है!") + " 🎉"
   ];
 
   useEffect(() => {
@@ -708,9 +717,9 @@ function CatalogCreating({ businessName, onDone }) {
           {step < steps.length - 1 ? "⚡" : "✅"}
         </div>
         <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 8 }}>
-          {step < steps.length - 1 ? "Building Your Catalog" : "Catalog is Live!"}
+          {step < steps.length - 1 ? tr(lang, "Building Your Catalog", "आपका कैटलॉग बनाया जा रहा है") : tr(lang, "Catalog is Live!", "कैटलॉग लाइव है!")}
         </h2>
-        <p style={{ color: "var(--muted)", marginBottom: 40, fontSize: "0.9rem" }}>{businessName || "Your Business"}</p>
+        <p style={{ color: "var(--muted)", marginBottom: 40, fontSize: "0.9rem" }}>{businessName || tr(lang, "Your Business", "आपका व्यवसाय")}</p>
         <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 100, height: 6, overflow: "hidden", marginBottom: 24 }}>
           <div style={{
             height: "100%", width: `${((step + 1) / steps.length) * 100}%`,
@@ -734,10 +743,39 @@ function CatalogCreating({ businessName, onDone }) {
   );
 }
 
+function getCatalogPath(slug) {
+  const safeSlug = String(slug || "").trim() || "my-business";
+  return `/catalog/${safeSlug}`;
+}
+
+function getBaseSiteUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    const raw = process.env.NEXT_PUBLIC_SITE_URL.trim();
+    if (raw) {
+      const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+      return normalized.replace(/\/$/, "");
+    }
+  }
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return "";
+}
+
+function getCatalogUrl(slug) {
+  const base = getBaseSiteUrl();
+  const path = getCatalogPath(slug);
+  return base ? `${base}${path}` : path;
+}
+
 /* ─────────────────────────────────────────────
    SUCCESS PAGE
 ───────────────────────────────────────────── */
-function SuccessPage({ businessName, onNavigate }) {
+function SuccessPage({ businessName, catalogSlug, onNavigate, lang }) {
+  const normalizedSlug = (catalogSlug || (businessName || "my-business").toLowerCase().replace(/\s+/g, "-")).trim() || "my-business";
+  const catalogPath = getCatalogPath(normalizedSlug);
+  const catalogUrl = getCatalogUrl(normalizedSlug);
+
   return (
     <div className="page-enter" style={{
       minHeight: "100vh", display: "flex", flexDirection: "column",
@@ -752,10 +790,10 @@ function SuccessPage({ businessName, onNavigate }) {
           borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem"
         }}>✅</div>
         <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 16 }}>
-          You're <span style={{ color: "var(--red)" }}>live!</span>
+          {tr(lang, "You're", "आप") } <span style={{ color: "var(--red)" }}>{tr(lang, "live!", "लाइव हैं!")}</span>
         </h1>
         <p style={{ color: "var(--muted)", fontSize: "1rem", lineHeight: 1.7, marginBottom: 40 }}>
-          <strong style={{ color: "var(--white)" }}>{businessName || "Your business"}</strong> catalog has been created and deployed.
+          <strong style={{ color: "var(--white)" }}>{businessName || tr(lang, "Your business", "आपका व्यवसाय")}</strong> {tr(lang, "catalog has been created and deployed.", "का कैटलॉग बनकर डिप्लॉय हो गया है।")}
         </p>
         <div style={{
           background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)",
@@ -763,18 +801,48 @@ function SuccessPage({ businessName, onNavigate }) {
           display: "flex", alignItems: "center", gap: 12, marginBottom: 32, textAlign: "left"
         }}>
           <span style={{ fontSize: "0.7rem", color: "var(--muted)", letterSpacing: "0.08em", textTransform: "uppercase" }}>URL</span>
-          <span style={{ flex: 1, fontSize: "0.88rem", fontFamily: "monospace", color: "var(--white)" }}>
-            catalyst.app/<span style={{ color: "var(--red)" }}>{(businessName || "my-business").toLowerCase().replace(/\s+/g, "-")}</span>
-          </span>
-          <button style={{
+          <a
+            href={catalogPath}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              flex: 1,
+              fontSize: "0.88rem",
+              fontFamily: "monospace",
+              color: "var(--white)",
+              textDecoration: "none"
+            }}
+          >
+            <span style={{ color: "var(--red)" }}>{catalogUrl}</span>
+          </a>
+          <button
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(catalogUrl);
+                alert("Catalog URL copied to clipboard");
+              } catch {
+                alert(`Copy failed. URL: ${catalogUrl}`);
+              }
+            }}
+            style={{
             background: "var(--red-soft)", border: "1px solid rgba(229,40,30,0.3)",
             borderRadius: 7, padding: "6px 12px", color: "var(--red)",
             fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif"
-          }}>Copy</button>
+          }}
+          >{tr(lang, "Copy", "कॉपी")}</button>
         </div>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <button className="c-btn-red" onClick={() => onNavigate("dashboard")}>View Dashboard</button>
-          <button className="c-btn-ghost" onClick={() => onNavigate("register")}>Create Another</button>
+          <a
+            href={catalogPath}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="c-btn-red"
+            style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+          >
+            {tr(lang, "Open Catalog", "कैटलॉग खोलें")}
+          </a>
+          <button className="c-btn-red" onClick={() => onNavigate("dashboard")}>{tr(lang, "View Dashboard", "डैशबोर्ड देखें")}</button>
+          <button className="c-btn-ghost" onClick={() => onNavigate("register")}>{tr(lang, "Create Another", "एक और बनाएं")}</button>
         </div>
       </div>
     </div>
@@ -784,7 +852,7 @@ function SuccessPage({ businessName, onNavigate }) {
 /* ─────────────────────────────────────────────
    BUSINESS DASHBOARD - Manage all businesses
 ───────────────────────────────────────────── */
-function BusinessDashboard({ onNavigate }) {
+function BusinessDashboard({ onNavigate, lang }) {
   const [businesses, setBusinesses] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -870,7 +938,7 @@ function BusinessDashboard({ onNavigate }) {
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "2rem", marginBottom: 16 }}>⚡</div>
-          <p style={{ color: "var(--muted)" }}>Loading your businesses...</p>
+          <p style={{ color: "var(--muted)" }}>{tr(lang, "Loading your businesses...", "आपके व्यवसाय लोड हो रहे हैं...")}</p>
         </div>
       </div>
     );
@@ -882,25 +950,25 @@ function BusinessDashboard({ onNavigate }) {
         {/* Header */}
         <div style={{ marginBottom: 48 }}>
           <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "2.5rem", fontWeight: 800, marginBottom: 8 }}>
-            My <span style={{ color: "var(--red)" }}>Businesses</span>
+            {tr(lang, "My", "मेरे")} <span style={{ color: "var(--red)" }}>{tr(lang, "Businesses", "व्यवसाय")}</span>
           </h1>
           <p style={{ color: "var(--muted)", fontSize: "1rem" }}>
-            Manage your catalogs, products, and settings
+            {tr(lang, "Manage your catalogs, products, and settings", "अपने कैटलॉग, प्रोडक्ट और सेटिंग्स मैनेज करें")}
           </p>
         </div>
 
         {/* Action Bar */}
         <div style={{ display: "flex", gap: 12, marginBottom: 32, flexWrap: "wrap" }}>
           <button className="c-btn-red" onClick={() => onNavigate("register")}>
-            + Create New Business
+            + {tr(lang, "Create New Business", "नया व्यवसाय बनाएं")}
           </button>
           {selectedBusiness && (
             <>
               <button className="c-btn-ghost" onClick={() => setProductModal(selectedBusiness)}>
-                + Add Product
+                + {tr(lang, "Add Product", "प्रोडक्ट जोड़ें")}
               </button>
               <button className="c-btn-ghost" onClick={() => setSelectedBusiness(null)}>
-                ← Back to Businesses
+                ← {tr(lang, "Back to Businesses", "व्यवसायों पर वापस")}
               </button>
             </>
           )}
@@ -928,6 +996,7 @@ function BusinessDashboard({ onNavigate }) {
                 <BusinessCard
                   key={business.id}
                   business={business}
+                  lang={lang}
                   onEdit={() => setEditModal({ type: 'business', data: business })}
                   onDelete={() => deleteBusiness(business.id)}
                   onViewProducts={() => viewProducts(business.id)}
@@ -960,6 +1029,7 @@ function BusinessDashboard({ onNavigate }) {
                   <ProductCardDashboard
                     key={product.id}
                     product={product}
+                    lang={lang}
                     onEdit={() => setEditModal({ type: 'product', data: product })}
                     onDelete={() => deleteProduct(product.id)}
                   />
@@ -974,6 +1044,7 @@ function BusinessDashboard({ onNavigate }) {
       {editModal && (
         <EditModal
           data={editModal}
+          lang={lang}
           onClose={() => setEditModal(null)}
           onSave={async (updated) => {
             if (editModal.type === 'business') {
@@ -1009,6 +1080,7 @@ function BusinessDashboard({ onNavigate }) {
       {productModal && (
         <AddProductModal
           businessId={productModal}
+          lang={lang}
           onClose={() => setProductModal(null)}
           onAdd={async (productData) => {
             const { data, error } = await supabase
@@ -1030,7 +1102,9 @@ function BusinessDashboard({ onNavigate }) {
 }
 
 /* ── Business Card Component ── */
-function BusinessCard({ business, onEdit, onDelete, onViewProducts }) {
+function BusinessCard({ business, onEdit, onDelete, onViewProducts, lang }) {
+  const activeTemplate = getTemplateByKey(business.template_key);
+
   return (
     <div style={{
       background: "rgba(255,255,255,0.04)",
@@ -1089,6 +1163,26 @@ function BusinessCard({ business, onEdit, onDelete, onViewProducts }) {
         {business.description}
       </p>
 
+      <div style={{ marginBottom: 16 }}>
+        <span style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "5px 10px",
+          borderRadius: 100,
+          fontSize: "0.72rem",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          fontWeight: 600,
+          background: "var(--red-soft)",
+          border: "1px solid rgba(229,40,30,0.25)",
+          color: "var(--red)"
+        }}>
+          <span>{activeTemplate.emoji}</span>
+          {activeTemplate.name}
+        </span>
+      </div>
+
       {(business.phone || business.whatsapp) && (
         <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
           {business.phone && (
@@ -1137,12 +1231,16 @@ function BusinessCard({ business, onEdit, onDelete, onViewProducts }) {
           onMouseEnter={e => e.currentTarget.style.background = "#c9211a"}
           onMouseLeave={e => e.currentTarget.style.background = "var(--red)"}
         >
-          Manage Products
+          {tr(lang, "Manage Products", "प्रोडक्ट मैनेज करें")}
         </button>
         <button
           onClick={(e) => {
             e.stopPropagation();
-            window.open(`/Catalog/${business.slug}`, '_blank');
+            if (!business.slug) {
+              alert(tr(lang, "This business does not have a public catalog slug yet. Please edit and save the business once.", "इस व्यवसाय का पब्लिक कैटलॉग स्लग अभी नहीं है। कृपया एक बार एडिट करके सेव करें।"));
+              return;
+            }
+            window.open(getCatalogUrl(business.slug), '_blank', 'noopener,noreferrer');
           }}
           style={{
             background: "rgba(37,211,102,0.12)",
@@ -1162,7 +1260,7 @@ function BusinessCard({ business, onEdit, onDelete, onViewProducts }) {
           onMouseLeave={e => {
             e.currentTarget.style.background = "rgba(37,211,102,0.12)";
           }}
-          title="View public catalog"
+          title={tr(lang, "View public catalog", "पब्लिक कैटलॉग देखें")}
         >
           🌐
         </button>
@@ -1187,7 +1285,7 @@ function BusinessCard({ business, onEdit, onDelete, onViewProducts }) {
           onMouseEnter={e => e.currentTarget.style.background = "rgba(100,150,255,0.2)"}
           onMouseLeave={e => e.currentTarget.style.background = "rgba(100,150,255,0.12)"}
         >
-          ✏️ Edit
+          ✏️ {tr(lang, "Edit", "एडिट")}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -1207,7 +1305,7 @@ function BusinessCard({ business, onEdit, onDelete, onViewProducts }) {
           onMouseEnter={e => e.currentTarget.style.background = "rgba(255,80,80,0.2)"}
           onMouseLeave={e => e.currentTarget.style.background = "rgba(255,80,80,0.12)"}
         >
-          🗑️ Delete
+          🗑️ {tr(lang, "Delete", "डिलीट")}
         </button>
       </div>
     </div>
@@ -1215,7 +1313,7 @@ function BusinessCard({ business, onEdit, onDelete, onViewProducts }) {
 }
 
 /* ── Product Card for Dashboard ── */
-function ProductCardDashboard({ product, onEdit, onDelete }) {
+function ProductCardDashboard({ product, onEdit, onDelete, lang }) {
   return (
     <div style={{
       background: "rgba(255,255,255,0.04)",
@@ -1280,7 +1378,7 @@ function ProductCardDashboard({ product, onEdit, onDelete }) {
               fontFamily: "'Outfit', sans-serif"
             }}
           >
-            Edit
+            {tr(lang, "Edit", "एडिट")}
           </button>
           <button
             onClick={onDelete}
@@ -1297,7 +1395,7 @@ function ProductCardDashboard({ product, onEdit, onDelete }) {
               fontFamily: "'Outfit', sans-serif"
             }}
           >
-            Delete
+            {tr(lang, "Delete", "डिलीट")}
           </button>
         </div>
       </div>
@@ -1306,14 +1404,15 @@ function ProductCardDashboard({ product, onEdit, onDelete }) {
 }
 
 /* ── Edit Modal ── */
-function EditModal({ data, onClose, onSave }) {
+function EditModal({ data, onClose, onSave, lang }) {
   const [form, setForm] = useState(
     data.type === 'business'
       ? {
           business_name: data.data.business_name || '',
           description: data.data.description || '',
           phone: data.data.phone || '',
-          whatsapp: data.data.whatsapp || ''
+          whatsapp: data.data.whatsapp || '',
+          template_key: data.data.template_key || DEFAULT_TEMPLATE_KEY
         }
       : {
           name: data.data.name || '',
@@ -1348,13 +1447,13 @@ function EditModal({ data, onClose, onSave }) {
         overflow: "auto"
       }} onClick={e => e.stopPropagation()}>
         <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.8rem", marginBottom: 24 }}>
-          Edit {data.type === 'business' ? 'Business' : 'Product'}
+          {tr(lang, "Edit", "एडिट")} {data.type === 'business' ? tr(lang, 'Business', 'व्यवसाय') : tr(lang, 'Product', 'प्रोडक्ट')}
         </h2>
 
         {data.type === 'business' ? (
           <>
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Business Name</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Business Name", "व्यवसाय का नाम")}</span>
               <input
                 className="c-input"
                 value={form.business_name}
@@ -1362,7 +1461,7 @@ function EditModal({ data, onClose, onSave }) {
               />
             </label>
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Description</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Description", "विवरण")}</span>
               <textarea
                 className="c-input"
                 value={form.description}
@@ -1371,12 +1470,12 @@ function EditModal({ data, onClose, onSave }) {
               />
             </label>
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Phone</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Phone", "फोन")}</span>
               <input
                 className="c-input"
                 value={form.phone}
                 onChange={e => set('phone', e.target.value)}
-                placeholder="Optional"
+                placeholder={tr(lang, "Optional", "वैकल्पिक")}
               />
             </label>
             <label style={{ display: "block", marginBottom: 24 }}>
@@ -1385,14 +1484,29 @@ function EditModal({ data, onClose, onSave }) {
                 className="c-input"
                 value={form.whatsapp}
                 onChange={e => set('whatsapp', e.target.value)}
-                placeholder="Optional"
+                placeholder={tr(lang, "Optional", "वैकल्पिक")}
               />
+            </label>
+
+            <label style={{ display: "block", marginBottom: 24 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Catalog Template", "कैटलॉग टेम्पलेट")}</span>
+              <select
+                className="c-input"
+                value={form.template_key}
+                onChange={e => set('template_key', e.target.value)}
+              >
+                {CATALOG_TEMPLATES.map((template) => (
+                  <option key={template.key} value={template.key}>
+                    {template.emoji} {template.name}
+                  </option>
+                ))}
+              </select>
             </label>
           </>
         ) : (
           <>
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Product Name</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Product Name", "प्रोडक्ट नाम")}</span>
               <input
                 className="c-input"
                 value={form.name}
@@ -1400,7 +1514,7 @@ function EditModal({ data, onClose, onSave }) {
               />
             </label>
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Description</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Description", "विवरण")}</span>
               <textarea
                 className="c-input"
                 value={form.description}
@@ -1409,22 +1523,22 @@ function EditModal({ data, onClose, onSave }) {
               />
             </label>
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Price (₹)</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Price (₹)", "कीमत (₹)")}</span>
               <input
                 className="c-input"
                 type="number"
                 value={form.price}
                 onChange={e => set('price', e.target.value)}
-                placeholder="Optional"
+                placeholder={tr(lang, "Optional", "वैकल्पिक")}
               />
             </label>
             <label style={{ display: "block", marginBottom: 24 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Image URL</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Image URL", "इमेज URL")}</span>
               <input
                 className="c-input"
                 value={form.image_url}
                 onChange={e => set('image_url', e.target.value)}
-                placeholder="Optional"
+                placeholder={tr(lang, "Optional", "वैकल्पिक")}
               />
             </label>
           </>
@@ -1432,10 +1546,10 @@ function EditModal({ data, onClose, onSave }) {
 
         <div style={{ display: "flex", gap: 12 }}>
           <button className="c-btn-red" onClick={() => onSave(form)} style={{ flex: 1 }}>
-            Save Changes
+            {tr(lang, "Save Changes", "सेव करें")}
           </button>
           <button className="c-btn-ghost" onClick={onClose}>
-            Cancel
+            {tr(lang, "Cancel", "रद्द करें")}
           </button>
         </div>
       </div>
@@ -1444,7 +1558,7 @@ function EditModal({ data, onClose, onSave }) {
 }
 
 /* ── Add Product Modal ── */
-function AddProductModal({ businessId, onClose, onAdd }) {
+function AddProductModal({ businessId, onClose, onAdd, lang }) {
   const [form, setForm] = useState({ name: '', description: '', price: '', image_url: '' });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -1471,30 +1585,30 @@ function AddProductModal({ businessId, onClose, onAdd }) {
         overflow: "auto"
       }} onClick={e => e.stopPropagation()}>
         <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.8rem", marginBottom: 24 }}>
-          Add New Product
+          {tr(lang, "Add New Product", "नया प्रोडक्ट जोड़ें")}
         </h2>
 
         <label style={{ display: "block", marginBottom: 16 }}>
-          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Product Name *</span>
+          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Product Name *", "प्रोडक्ट नाम *")}</span>
           <input
             className="c-input"
             value={form.name}
             onChange={e => set('name', e.target.value)}
-            placeholder="Enter product name"
+            placeholder={tr(lang, "Enter product name", "प्रोडक्ट नाम दर्ज करें")}
           />
         </label>
         <label style={{ display: "block", marginBottom: 16 }}>
-          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Description</span>
+          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Description", "विवरण")}</span>
           <textarea
             className="c-input"
             value={form.description}
             onChange={e => set('description', e.target.value)}
-            placeholder="Describe your product"
+            placeholder={tr(lang, "Describe your product", "प्रोडक्ट का विवरण लिखें")}
             rows={3}
           />
         </label>
         <label style={{ display: "block", marginBottom: 16 }}>
-          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Price (₹)</span>
+          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Price (₹)", "कीमत (₹)")}</span>
           <input
             className="c-input"
             type="number"
@@ -1504,12 +1618,12 @@ function AddProductModal({ businessId, onClose, onAdd }) {
           />
         </label>
         <label style={{ display: "block", marginBottom: 24 }}>
-          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>Image URL</span>
+          <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Image URL", "इमेज URL")}</span>
           <input
             className="c-input"
             value={form.image_url}
             onChange={e => set('image_url', e.target.value)}
-            placeholder="https://example.com/image.jpg"
+            placeholder={tr(lang, "https://example.com/image.jpg", "https://example.com/image.jpg")}
           />
         </label>
 
@@ -1518,17 +1632,17 @@ function AddProductModal({ businessId, onClose, onAdd }) {
             className="c-btn-red"
             onClick={() => {
               if (!form.name.trim()) {
-                alert("Product name is required");
+                alert(tr(lang, "Product name is required", "प्रोडक्ट नाम आवश्यक है"));
                 return;
               }
               onAdd(form);
             }}
             style={{ flex: 1 }}
           >
-            Add Product
+            {tr(lang, "Add Product", "प्रोडक्ट जोड़ें")}
           </button>
           <button className="c-btn-ghost" onClick={onClose}>
-            Cancel
+            {tr(lang, "Cancel", "रद्द करें")}
           </button>
         </div>
       </div>
@@ -1539,11 +1653,31 @@ function AddProductModal({ businessId, onClose, onAdd }) {
 /* ─────────────────────────────────────────────
    REGISTER PAGE
 ───────────────────────────────────────────── */
-function RegisterPage({ onNavigate }) {
-  const [form, setForm] = useState({ businessName: "", description: "", phone: "", whatsapp: "", logo: null });
+function RegisterPage({ onNavigate, lang }) {
+  const [form, setForm] = useState(() => {
+    let templateKey = DEFAULT_TEMPLATE_KEY;
+
+    if (typeof window !== "undefined") {
+      const fromTemplates = window.localStorage.getItem("selectedCatalogTemplate");
+      if (fromTemplates) {
+        templateKey = fromTemplates;
+        window.localStorage.removeItem("selectedCatalogTemplate");
+      }
+    }
+
+    return {
+      businessName: "",
+      description: "",
+      phone: "",
+      whatsapp: "",
+      logo: null,
+      templateKey
+    };
+  });
   const [errors, setErrors] = useState({});
   const [logoPreview, setLogoPreview] = useState(null);
   const [page, setPage] = useState("form");
+  const [createdSlug, setCreatedSlug] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const fileRef = useRef(null);
 
@@ -1605,43 +1739,83 @@ function RegisterPage({ onNavigate }) {
         return;
       }
 
-      // Generate slug and check for uniqueness
-      let slug = generateSlug(form.businessName);
-      let slugAttempt = 1;
-      let finalSlug = slug;
+      // Generate slug, pre-check uniqueness, then insert.
+      // If a concurrent insert still creates a slug conflict (409/23505), we retry with a new slug.
+      const baseSlug = generateSlug(form.businessName) || "business";
+      const maxInsertAttempts = 6;
+      let insertError = null;
+      let insertedSlug = "";
 
-      // Check if slug already exists
-      while (true) {
-        const { data: existingBusiness } = await supabase
+      for (let attempt = 0; attempt < maxInsertAttempts; attempt++) {
+        const candidateSlug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
+
+        const { data: existingBusiness, error: slugError } = await supabase
           .from("businesses")
           .select("id")
-          .eq("slug", finalSlug)
-          .single();
+          .eq("slug", candidateSlug)
+          .maybeSingle();
 
-        if (!existingBusiness) break; // Slug is unique
+        if (slugError) throw slugError;
+        if (existingBusiness) continue;
 
-        // Slug exists, append number
-        slugAttempt++;
-        finalSlug = `${slug}-${slugAttempt}`;
-      }
-
-      // Insert business record with slug
-      const { error: insertError } = await supabase
-        .from("businesses")
-        .insert([{
+        const payload = {
           business_name: form.businessName.trim(),
           description: form.description.trim(),
           phone: form.phone?.trim() || null,
           whatsapp: form.whatsapp?.trim() || null,
           user_id: user.id,
-          slug: finalSlug
-        }]);
+          slug: candidateSlug,
+          template_key: form.templateKey || DEFAULT_TEMPLATE_KEY
+        };
+
+        let insertResult = await supabase.from("businesses").insert([payload]);
+        insertError = insertResult.error;
+
+        const insertMessage = (insertError?.message || "").toLowerCase();
+        const missingTemplateKey =
+          insertMessage.includes("template_key") &&
+          (insertMessage.includes("column") || insertMessage.includes("schema") || insertMessage.includes("not found"));
+
+        if (insertError && missingTemplateKey) {
+          const { template_key, ...fallbackPayload } = payload;
+          insertResult = await supabase.from("businesses").insert([fallbackPayload]);
+          insertError = insertResult.error;
+        }
+
+        if (!insertError) {
+          insertedSlug = candidateSlug;
+          break;
+        }
+
+        const isSlugConflict =
+          insertError.code === "23505" ||
+          (insertError.message || "").toLowerCase().includes("duplicate key") ||
+          (insertError.message || "").toLowerCase().includes("businesses_slug_unique");
+
+        if (isSlugConflict) {
+          continue;
+        }
+
+        break;
+      }
 
       if (insertError) {
         console.error("Insert error:", insertError);
-        setErrors({ businessName: `Failed to create business: ${insertError.message}` });
+
+        const message = (insertError.message || "").toLowerCase();
+        if (message.includes("row-level security") || message.includes("permission denied")) {
+          setErrors({ businessName: "Failed to create business: database permission denied (RLS). Please update your Supabase policies for inserts on businesses." });
+        } else if (insertError.code === "23505" || message.includes("businesses_slug_unique")) {
+          setErrors({ businessName: "Failed to create business: slug already exists. Please try again with a slightly different business name." });
+        } else if (message.includes("template_key")) {
+          setErrors({ businessName: "Failed to create business: template_key is not available in DB yet. Run add_business_template_key.sql and try again." });
+        } else {
+          setErrors({ businessName: `Failed to create business: ${insertError.message}` });
+        }
         return;
       }
+
+      setCreatedSlug(insertedSlug || baseSlug);
 
       // Success - proceed to creating page
       setPage("creating");
@@ -1659,8 +1833,8 @@ function RegisterPage({ onNavigate }) {
     r.readAsDataURL(file);
   };
 
-  if (page === "creating") return <CatalogCreating businessName={form.businessName} onDone={() => setPage("success")} />;
-  if (page === "success") return <SuccessPage businessName={form.businessName} onNavigate={onNavigate} />;
+  if (page === "creating") return <CatalogCreating businessName={form.businessName} onDone={() => setPage("success")} lang={lang} />;
+  if (page === "success") return <SuccessPage businessName={form.businessName} catalogSlug={createdSlug} onNavigate={onNavigate} lang={lang} />;
 
   return (
     <div className="page-enter" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
@@ -1675,7 +1849,7 @@ function RegisterPage({ onNavigate }) {
       }}
       onMouseEnter={e => e.currentTarget.style.color = "var(--white)"}
       onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
-      >← Back to Home</button>
+      >← {tr(lang, "Back to Home", "होम पर वापस")}</button>
 
       <div style={{ position: "relative", zIndex: 2, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "100px 24px 60px" }}>
         <div style={{
@@ -1696,7 +1870,7 @@ function RegisterPage({ onNavigate }) {
                 color: "#28c850", fontWeight: 600, marginBottom: 16
               }}>
                 <span style={{ width: 5, height: 5, background: "#28c850", borderRadius: "50%" }} />
-                Logged in as {currentUser.email}
+                {tr(lang, "Logged in as", "लॉगिन किया गया है")} {currentUser.email}
               </div>
             )}
             
@@ -1708,18 +1882,18 @@ function RegisterPage({ onNavigate }) {
               color: "var(--red)", fontWeight: 600, marginBottom: 20
             }}>
               <span style={{ width: 5, height: 5, background: "var(--red)", borderRadius: "50%", animation: "glowPulse 2s infinite" }} />
-              Free Forever · No Credit Card
+              {tr(lang, "Free Forever · No Credit Card", "हमेशा फ्री · बिना क्रेडिट कार्ड")}
             </div>
             <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 8, lineHeight: 1.1 }}>
-              Create Your <span style={{ color: "var(--red)" }}>Catalyst</span>
+              {tr(lang, "Create Your", "अपना")} <span style={{ color: "var(--red)" }}>Catalyst</span>
             </h1>
-            <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>Set up your business profile and go live in 60 seconds.</p>
+            <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>{tr(lang, "Set up your business profile and go live in 60 seconds.", "अपना बिजनेस प्रोफाइल सेट करें और 60 सेकंड में लाइव हो जाएं।")}</p>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {[
-              { key: "businessName", label: "Business Name *", ph: "e.g. Acme Electronics", type: "input" },
-              { key: "description", label: "Business Description *", ph: "Tell customers what you sell and what makes you unique…", type: "textarea" }
+              { key: "businessName", label: tr(lang, "Business Name *", "व्यवसाय का नाम *"), ph: tr(lang, "e.g. Acme Electronics", "उदा. शर्मा इलेक्ट्रॉनिक्स"), type: "input" },
+              { key: "description", label: tr(lang, "Business Description *", "व्यवसाय विवरण *"), ph: tr(lang, "Tell customers what you sell and what makes you unique...", "ग्राहकों को बताएं कि आप क्या बेचते हैं और क्या खास है..."), type: "textarea" }
             ].map(({ key, label, ph, type }) => (
               <div key={key}>
                 <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.5)", marginBottom: 8 }}>{label}</label>
@@ -1732,7 +1906,7 @@ function RegisterPage({ onNavigate }) {
             ))}
 
             <div style={{ display: "flex", alignItems: "center", gap: 12, color: "rgba(245,243,239,0.2)", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />Optional<div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />{tr(lang, "Optional", "वैकल्पिक")}<div style={{ flex: 1, height: 1, background: "var(--border)" }} />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -1745,7 +1919,63 @@ function RegisterPage({ onNavigate }) {
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.35)", marginBottom: 8 }}>Logo</label>
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.35)", marginBottom: 10 }}>{tr(lang, "Catalog Template", "कैटलॉग टेम्पलेट")}</label>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                gap: 10,
+                marginBottom: 18
+              }}>
+                {CATALOG_TEMPLATES.map((template) => {
+                  const isActive = form.templateKey === template.key;
+                  return (
+                    <button
+                      key={template.key}
+                      type="button"
+                      onClick={() => set("templateKey", template.key)}
+                      style={{
+                        textAlign: "left",
+                        background: isActive ? "rgba(229,40,30,0.16)" : "rgba(255,255,255,0.02)",
+                        border: isActive ? "1px solid rgba(229,40,30,0.45)" : "1px solid var(--border)",
+                        borderRadius: 10,
+                        padding: "8px",
+                        color: "var(--white)",
+                        cursor: "pointer",
+                        overflow: "hidden"
+                      }}
+                    >
+                      <div style={{
+                        width: "100%",
+                        height: 74,
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        marginBottom: 8,
+                        border: "1px solid var(--border)",
+                        background: "rgba(255,255,255,0.03)"
+                      }}>
+                        <img
+                          src={template.previewImage}
+                          alt={`${template.name} preview`}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block"
+                          }}
+                        />
+                      </div>
+                      <div style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
+                        {template.emoji} {template.name}
+                      </div>
+                      <div style={{ fontSize: "0.72rem", color: "var(--muted)", lineHeight: 1.4 }}>
+                        {template.description}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.35)", marginBottom: 8 }}>{tr(lang, "Logo", "लोगो")}</label>
               <div onClick={() => fileRef.current?.click()} style={{
                 border: "1px dashed rgba(229,40,30,0.25)", borderRadius: 12, padding: "20px",
                 display: "flex", alignItems: "center", gap: 16, cursor: "pointer",
@@ -1760,18 +1990,18 @@ function RegisterPage({ onNavigate }) {
                   : <div style={{ width: 48, height: 48, background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem" }}>🖼</div>
                 }
                 <div>
-                  <div style={{ fontSize: "0.85rem", fontWeight: 500, marginBottom: 2 }}>{logoPreview ? "Logo selected" : "Upload your logo"}</div>
-                  <div style={{ fontSize: "0.72rem", color: "var(--muted)" }}>{logoPreview ? "Click to change" : "PNG, JPG up to 5MB"}</div>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 500, marginBottom: 2 }}>{logoPreview ? tr(lang, "Logo selected", "लोगो चुना गया") : tr(lang, "Upload your logo", "अपना लोगो अपलोड करें")}</div>
+                  <div style={{ fontSize: "0.72rem", color: "var(--muted)" }}>{logoPreview ? tr(lang, "Click to change", "बदलने के लिए क्लिक करें") : "PNG, JPG up to 5MB"}</div>
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogo} />
               </div>
             </div>
 
             <button className="c-btn-red" style={{ marginTop: 8, padding: "18px 24px", fontSize: "1rem", width: "100%" }} onClick={handleSubmit}>
-              Create Your Catalyst 🚀
+              {tr(lang, "Create Your Catalyst", "अपना Catalyst बनाएं")} 🚀
             </button>
             <p style={{ textAlign: "center", fontSize: "0.72rem", color: "rgba(245,243,239,0.25)" }}>
-              By continuing you agree to Catalyst's Terms of Service and Privacy Policy.
+              {tr(lang, "By continuing you agree to Catalyst's Terms of Service and Privacy Policy.", "आगे बढ़कर आप Catalyst की सेवा शर्तों और प्राइवेसी पॉलिसी से सहमत होते हैं।")}
             </p>
           </div>
         </div>
@@ -1784,17 +2014,37 @@ function RegisterPage({ onNavigate }) {
    ROOT APP
 ───────────────────────────────────────────── */
 export default function App() {
-  const [page, setPage] = useState("landing");
+  const [lang, setLang] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.localStorage.getItem("catalogLang") || "en";
+    }
+    return "en";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("catalogLang", lang);
+      document.documentElement.lang = lang;
+    }
+  }, [lang]);
+
+  const [page, setPage] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("start") === "register") return "register";
+    }
+    return "landing";
+  });
   const [key, setKey] = useState(0);
   const navigate = (p) => { setKey(k => k + 1); setPage(p); window.scrollTo({ top: 0, behavior: "instant" }); };
   return (
     <>
       <GlobalStyles />
-      {page !== "register" && <Navbar onNavigate={navigate} />}
+      {page !== "register" && <Navbar onNavigate={navigate} lang={lang} onLangChange={setLang} />}
       <div key={key}>
-        {page === "landing" && <LandingPage onNavigate={navigate} />}
-        {page === "register" && <RegisterPage onNavigate={navigate} />}
-        {page === "dashboard" && <BusinessDashboard onNavigate={navigate} />}
+        {page === "landing" && <LandingPage onNavigate={navigate} lang={lang} />}
+        {page === "register" && <RegisterPage onNavigate={navigate} lang={lang} />}
+        {page === "dashboard" && <BusinessDashboard onNavigate={navigate} lang={lang} />}
       </div>
     </>
   );
