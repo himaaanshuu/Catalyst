@@ -1,6 +1,4 @@
-import { getSiteUrl } from "../Library/siteUrl";
-
-const siteUrl = getSiteUrl();
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
 
 export default function sitemap() {
   const routes = [
