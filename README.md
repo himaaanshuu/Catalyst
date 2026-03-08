@@ -154,8 +154,6 @@ catalyst/
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   NEXT_PUBLIC_SITE_URL=https://yourdomain.com
-   GOOGLE_SITE_VERIFICATION=your_google_verification_token
    ```
 
 4. **Run the development server**
@@ -285,7 +283,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 # Optional: For production
 NEXT_PUBLIC_SITE_URL=https://yourdomain.com
-GOOGLE_SITE_VERIFICATION=your_google_verification_token
 ```
 
 **Where to find these:**
@@ -396,8 +393,6 @@ await supabase.auth.signOut()
    - Add environment variables:
      - `NEXT_PUBLIC_SUPABASE_URL`
      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-       - `NEXT_PUBLIC_SITE_URL`
-       - `GOOGLE_SITE_VERIFICATION` (optional)
 
 3. **Deploy**
    - Click "Deploy"
