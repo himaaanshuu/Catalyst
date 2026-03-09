@@ -43,6 +43,7 @@
 - ⚙️ **Settings Management** - Update profile and business information
 - 💳 **Razorpay Plan Checkout** - Paid plans are processed through Razorpay before catalog creation
 - 🧾 **Pricing Plans** - Free / Basic / Standard / Pro plans with tiered pricing and limits
+- 🪟 **Always-On Plan Popup** - Homepage opens plan selector popup on every visit
 - 🪪 **Plan Lock During Signup** - Plan selected on homepage carries into registration automatically
 - 🖼️ **Template/Plan Previews** - Visual previews for each available plan style
 - 🔗 **Stable Public Links** - Normalized lowercase `/catalog/:slug` links for easier sharing
@@ -66,6 +67,7 @@
 - 🧮 **Plan-to-DB Key Mapping** - Backward-compatible handling for legacy template keys
 - 🧾 **Payment Logging** - Verified Razorpay transactions saved to Supabase `payments` table
 - 🏠 **Homepage Pricing + Popup** - Dedicated pricing section and plan selector modal on `/`
+- 🛡️ **Paid Plan Safety Fallback** - If Razorpay env is missing, paid plans auto-disable and Free remains available
 - 🗺️ **SEO Metadata Routes** - Dynamic `robots.txt` and `sitemap.xml` support
 - 🌐 **EN/HI Language Toggle** - Hindi and English toggle on key landing/dashboard views
 
@@ -483,6 +485,10 @@ await supabase.auth.signOut()
    - Add environment variables:
      - `NEXT_PUBLIC_SUPABASE_URL`
      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `RAZORPAY_KEY_ID`
+   - `RAZORPAY_KEY_SECRET`
+   - `NEXT_PUBLIC_SITE_URL`
 
 3. **Deploy**
    - Click "Deploy"
@@ -500,10 +506,11 @@ After deployment, update:
 
 ## 🚧 Currently Working On
 
-- Enforcing strict plan limits (product caps) at creation/update time
-- Dashboard UI for payment history and reconciliation
+- Enforcing strict plan limits (product caps) at database/API level
+- Dashboard UI for payment history, refunds, and reconciliation
 - Webhook-based Razorpay confirmation for stronger backend guarantees
 - Production observability and alerting for payment/API failures
+- Policy/legal pages (Terms, Privacy, Refund) for client-ready deployment
 
 ---
 
@@ -515,6 +522,7 @@ After deployment, update:
 - [ ] Bulk product import (CSV)
 - [x] PDF export for public catalogs
 - [ ] Better public catalog 404 and "business not found" UX
+- [x] Homepage pricing section + plan popup
 
 ### Phase 2: Business Features
 - [ ] Analytics dashboard (views, clicks, orders)
@@ -522,6 +530,7 @@ After deployment, update:
 - [ ] Product variants (size, color)
 - [ ] Discount codes and pricing
 - [ ] Customer reviews and ratings
+- [ ] Payment status timeline and refund support in dashboard
 
 ### Phase 3: Advanced Features
 - [ ] Custom domains for catalogs
@@ -530,6 +539,7 @@ After deployment, update:
 - [x] Razorpay integration
 - [ ] QR code generation
 - [ ] Team collaboration
+- [ ] Webhook + idempotency protection for payment events
 
 ### Phase 4: Scaling
 - [ ] Mobile app (React Native)
