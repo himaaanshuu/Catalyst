@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Component/Navbar";
 import { CATALOG_TEMPLATES } from "@/Library/catalogTemplates";
@@ -65,10 +65,29 @@ const GlobalStyles = () => (
 export default function Home() {
   const router = useRouter();
   const [showPlanPopup, setShowPlanPopup] = useState(true);
+  const [paymentsEnabled, setPaymentsEnabled] = useState(true);
 
   const plans = useMemo(() => CATALOG_TEMPLATES, []);
 
+  useEffect(() => {
+    const loadPaymentConfig = async () => {
+      try {
+        const res = await fetch("/api/razorpay/create-order", { method: "GET" });
+        const data = await res.json();
+        setPaymentsEnabled(!!data?.enabled);
+      } catch {
+        setPaymentsEnabled(false);
+      }
+    };
+    loadPaymentConfig();
+  }, []);
+
   const selectPlan = (planKey) => {
+    const plan = plans.find((p) => p.key === planKey);
+    if (plan?.price > 0 && !paymentsEnabled) {
+      alert("Paid plans are temporarily unavailable because payment configuration is incomplete. Please choose Free plan or configure Razorpay env vars.");
+      return;
+    }
     window.localStorage.setItem("selectedCatalogTemplate", planKey);
     router.push("/dashboard/business?start=register");
   };
@@ -130,6 +149,20 @@ export default function Home() {
         <section id="pricing-section" style={{ maxWidth: 1120, margin: "0 auto", padding: "10px 24px 90px" }}>
           <h2 style={{ fontSize: "2rem", marginBottom: 8 }}>Pricing</h2>
           <p style={{ color: "var(--muted)", marginBottom: 18 }}>Choose the plan that fits your catalog size and growth stage.</p>
+          {!paymentsEnabled && (
+            <div style={{
+              marginBottom: 14,
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid rgba(229,40,30,0.35)",
+              background: "rgba(229,40,30,0.12)",
+              color: "#ff9b93",
+              fontSize: "0.88rem"
+            }}>
+              Razorpay is not fully configured in this environment. Paid plans are disabled until env vars are added.
+            </div>
+          )}
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
             {plans.map((plan) => (
               <article key={plan.key} className="plan-card">
@@ -145,18 +178,19 @@ export default function Home() {
                 </ul>
                 <button
                   onClick={() => selectPlan(plan.key)}
+                  disabled={plan.price > 0 && !paymentsEnabled}
                   style={{
                     width: "100%",
-                    background: "rgba(229,40,30,0.18)",
-                    border: "1px solid rgba(229,40,30,0.35)",
-                    color: "#ffb3ae",
+                    background: plan.price > 0 && !paymentsEnabled ? "rgba(255,255,255,0.06)" : "rgba(229,40,30,0.18)",
+                    border: plan.price > 0 && !paymentsEnabled ? "1px solid var(--border)" : "1px solid rgba(229,40,30,0.35)",
+                    color: plan.price > 0 && !paymentsEnabled ? "var(--muted)" : "#ffb3ae",
                     borderRadius: 10,
                     padding: "10px 12px",
                     fontWeight: 700,
-                    cursor: "pointer"
+                    cursor: plan.price > 0 && !paymentsEnabled ? "not-allowed" : "pointer"
                   }}
                 >
-                  Choose {plan.name}
+                  {plan.price > 0 && !paymentsEnabled ? "Unavailable" : `Choose ${plan.name}`}
                 </button>
               </article>
             ))}
@@ -183,18 +217,19 @@ export default function Home() {
                   <div style={{ marginBottom: 8, fontWeight: 800, color: plan.color }}>{plan.priceLabel}</div>
                   <button
                     onClick={() => selectPlan(plan.key)}
+                    disabled={plan.price > 0 && !paymentsEnabled}
                     style={{
                       width: "100%",
-                      background: "var(--red)",
-                      color: "#fff",
-                      border: "none",
+                      background: plan.price > 0 && !paymentsEnabled ? "rgba(255,255,255,0.08)" : "var(--red)",
+                      color: plan.price > 0 && !paymentsEnabled ? "var(--muted)" : "#fff",
+                      border: plan.price > 0 && !paymentsEnabled ? "1px solid var(--border)" : "none",
                       borderRadius: 8,
                       padding: "8px 10px",
                       fontWeight: 700,
-                      cursor: "pointer"
+                      cursor: plan.price > 0 && !paymentsEnabled ? "not-allowed" : "pointer"
                     }}
                   >
-                    Select
+                    {plan.price > 0 && !paymentsEnabled ? "Unavailable" : "Select"}
                   </button>
                 </div>
               ))}

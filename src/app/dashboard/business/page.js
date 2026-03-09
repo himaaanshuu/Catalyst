@@ -1689,6 +1689,7 @@ function RegisterPage({ onNavigate, lang }) {
   const [createdSlug, setCreatedSlug] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentsEnabled, setPaymentsEnabled] = useState(true);
   const fileRef = useRef(null);
 
   const loadRazorpayScript = () => {
@@ -1839,6 +1840,20 @@ function RegisterPage({ onNavigate, lang }) {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    const loadPaymentConfig = async () => {
+      try {
+        const res = await fetch("/api/razorpay/create-order", { method: "GET" });
+        const data = await res.json();
+        setPaymentsEnabled(!!data?.enabled);
+      } catch {
+        setPaymentsEnabled(false);
+      }
+    };
+
+    loadPaymentConfig();
+  }, []);
+
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); if (errors[k]) setErrors(e => ({ ...e, [k]: null })); };
 
   const validate = () => {
@@ -1890,6 +1905,11 @@ function RegisterPage({ onNavigate, lang }) {
       // If a concurrent insert still creates a slug conflict (409/23505), we retry with a new slug.
       const baseSlug = generateSlug(form.businessName) || "business";
       const selectedPlan = getTemplateByKey(form.templateKey || DEFAULT_TEMPLATE_KEY);
+
+      if ((selectedPlan?.price || 0) > 0 && !paymentsEnabled) {
+        setErrors({ businessName: "Paid plans are not available right now. Please configure Razorpay env vars or select Free plan." });
+        return;
+      }
 
       if ((selectedPlan?.price || 0) > 0) {
         await processPlanPayment({

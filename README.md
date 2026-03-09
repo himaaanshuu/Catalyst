@@ -334,6 +334,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 **Deployment note (important):**
 - `.env.local` is local-only. For hosted builds you must add the same keys in your platform env settings (for example Vercel Project Settings -> Environment Variables).
 - If these are not configured in hosting, you will get: `Missing Razorpay env vars...` and paid checkout will not open.
+- The app now automatically disables paid plans when payment env is missing, so users can continue with Free plan without hitting checkout errors.
 
 **Masked example (safe to share):**
 ```env
