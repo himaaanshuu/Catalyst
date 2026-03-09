@@ -271,6 +271,10 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 -- Create policies (see setup_rls_policies.sql for full details)
 ```
 
+### 4.1 Set Up Payments Table (Razorpay)
+
+Execute SQL from `add_payments_table.sql` to store verified payment records.
+
 ### 5. Configure Authentication
 
 1. Go to **Authentication** → **Providers** in Supabase
@@ -290,6 +294,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 # Optional: For production
 NEXT_PUBLIC_SITE_URL=https://yourdomain.com
+
+# Razorpay Payment Gateway
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+
+# Required to save verified payment records from API routes
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
 **Where to find these:**

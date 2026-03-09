@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Navbar from "@/app/Component/Navbar";
 import { CATALOG_TEMPLATES } from "@/Library/catalogTemplates";
 
@@ -117,7 +118,7 @@ export default function TemplatesPage() {
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent"
             }}>
-              Beautiful Templates
+              Catalog Plans
             </h1>
             <p style={{
               fontSize: "1.1rem",
@@ -126,7 +127,7 @@ export default function TemplatesPage() {
               margin: "0 auto",
               lineHeight: 1.6
             }}>
-              Choose from professionally designed templates. Customize colors, layouts, and branding to match your business.
+              Choose one of four catalog options: Free, Basic, Standard, and Pro. Each tier unlocks higher limits and more features.
             </p>
           </div>
 
@@ -145,12 +146,13 @@ export default function TemplatesPage() {
                   position: "relative",
                   borderBottom: "1px solid var(--border)"
                 }}>
-                  <img
+                  <Image
                     src={template.previewImage}
                     alt={`${template.name} template preview`}
+                    fill
+                    unoptimized
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     style={{
-                      width: "100%",
-                      height: "100%",
                       objectFit: "cover",
                       display: "block"
                     }}
@@ -173,15 +175,26 @@ export default function TemplatesPage() {
 
                 {/* Info */}
                 <div style={{ padding: "24px" }}>
-                  <h3 style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: "1.4rem",
-                    fontWeight: 700,
-                    marginBottom: 12,
-                    color: "var(--white)"
-                  }}>
-                    {template.name}
-                  </h3>
+                  <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12 }}>
+                    <h3 style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontSize: "1.4rem",
+                      fontWeight: 700,
+                      marginBottom: 12,
+                      color: "var(--white)"
+                    }}>
+                      {template.name}
+                    </h3>
+                    <div style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontSize: "1.25rem",
+                      fontWeight: 800,
+                      color: template.color
+                    }}>
+                      {template.priceLabel}
+                    </div>
+                  </div>
+
                   <p style={{
                     fontSize: "0.95rem",
                     color: "var(--muted)",
@@ -190,6 +203,21 @@ export default function TemplatesPage() {
                   }}>
                     {template.description}
                   </p>
+
+                  <ul style={{
+                    listStyle: "none",
+                    display: "grid",
+                    gap: 8,
+                    marginBottom: 18,
+                    padding: 0
+                  }}>
+                    {(template.features || []).map((feature) => (
+                      <li key={feature} style={{ fontSize: "0.86rem", color: "var(--muted)", display: "flex", gap: 8 }}>
+                        <span style={{ color: template.color }}>✓</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
 
                   {/* Badge */}
                   <div style={{
@@ -212,7 +240,7 @@ export default function TemplatesPage() {
                       background: "var(--red)",
                       borderRadius: "50%"
                     }} />
-                    Available
+                    {template.price === 0 ? "Starter" : "Paid Plan"}
                   </div>
 
                   <button
@@ -231,7 +259,7 @@ export default function TemplatesPage() {
                       fontFamily: "'Outfit', sans-serif"
                     }}
                   >
-                    Use This Template
+                    {template.price === 0 ? "Choose Free" : `Choose ${template.name}`}
                   </button>
                 </div>
               </div>
@@ -252,13 +280,13 @@ export default function TemplatesPage() {
               color: "var(--muted)",
               marginBottom: 8
             }}>
-              More templates coming soon! Each template is fully customizable.
+              Need help selecting a plan? Start with Free and upgrade as your catalog grows.
             </p>
             <p style={{
               fontSize: "0.85rem",
               color: "var(--muted)"
             }}>
-              Can't find what you're looking for? <span style={{ color: "var(--red)", cursor: "pointer" }}>Request a custom template</span>
+              Need a custom setup? <span style={{ color: "var(--red)", cursor: "pointer" }}>Request a tailored catalog plan</span>
             </p>
           </div>
 

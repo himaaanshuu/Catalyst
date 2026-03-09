@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import Image from "next/image";
 import { supabase } from "@/Library/Supabase";
 import Navbar from "@/app/Component/Navbar";
 import {
   CATALOG_TEMPLATES,
   DEFAULT_TEMPLATE_KEY,
+  getPersistedTemplateKey,
   getTemplateByKey
 } from "@/Library/catalogTemplates";
 
@@ -682,11 +684,11 @@ function LandingPage({ onNavigate, lang }) {
 ───────────────────────────────────────────── */
 function CatalogCreating({ businessName, onDone, lang }) {
   const [step, setStep] = useState(0);
-  const steps = [
+  const steps = useMemo(() => [
     tr(lang, "Initializing workspace...", "वर्कस्पेस तैयार हो रहा है..."), tr(lang, "Processing business profile...", "बिजनेस प्रोफाइल प्रोसेस हो रही है..."),
     tr(lang, "Selecting optimal template...", "सबसे अच्छा टेम्पलेट चुना जा रहा है..."), tr(lang, "Generating product pages...", "प्रोडक्ट पेज बनाए जा रहे हैं..."),
     tr(lang, "Deploying to Catalyst CDN...", "Catalyst CDN पर डिप्लॉय हो रहा है..."), tr(lang, "Your catalog is live!", "आपका कैटलॉग लाइव है!") + " 🎉"
-  ];
+  ], [lang]);
 
   useEffect(() => {
     if (step < steps.length - 1) {
@@ -696,7 +698,7 @@ function CatalogCreating({ businessName, onDone, lang }) {
       const t = setTimeout(onDone, 1200);
       return () => clearTimeout(t);
     }
-  }, [step]);
+  }, [onDone, step, steps.length]);
 
   return (
     <div style={{
@@ -861,6 +863,22 @@ function BusinessDashboard({ onNavigate, lang }) {
   const [productModal, setProductModal] = useState(null); // businessId for adding products
   const [selectedBusiness, setSelectedBusiness] = useState(null); // for viewing products
 
+  async function loadBusinesses(userId) {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("businesses")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading businesses:", error);
+    } else {
+      setBusinesses(data || []);
+    }
+    setLoading(false);
+  }
+
   // Check auth and load data
   useEffect(() => {
     const init = async () => {
@@ -874,22 +892,6 @@ function BusinessDashboard({ onNavigate, lang }) {
     };
     init();
   }, []);
-
-  const loadBusinesses = async (userId) => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("businesses")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-    
-    if (error) {
-      console.error("Error loading businesses:", error);
-    } else {
-      setBusinesses(data || []);
-    }
-    setLoading(false);
-  };
 
   const loadProducts = async (businessId) => {
     const { data, error } = await supabase
@@ -1489,7 +1491,7 @@ function EditModal({ data, onClose, onSave, lang }) {
             </label>
 
             <label style={{ display: "block", marginBottom: 24 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Catalog Template", "कैटलॉग टेम्पलेट")}</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 6, display: "block" }}>{tr(lang, "Catalog Plan", "कैटलॉग प्लान")}</span>
               <select
                 className="c-input"
                 value={form.template_key}
@@ -1654,32 +1656,167 @@ function AddProductModal({ businessId, onClose, onAdd, lang }) {
    REGISTER PAGE
 ───────────────────────────────────────────── */
 function RegisterPage({ onNavigate, lang }) {
-  const [form, setForm] = useState(() => {
+  const initialPlanState = (() => {
     let templateKey = DEFAULT_TEMPLATE_KEY;
+    let locked = false;
 
     if (typeof window !== "undefined") {
       const fromTemplates = window.localStorage.getItem("selectedCatalogTemplate");
       if (fromTemplates) {
         templateKey = fromTemplates;
+        locked = true;
         window.localStorage.removeItem("selectedCatalogTemplate");
       }
     }
 
+    return { templateKey, locked };
+  })();
+
+  const [form, setForm] = useState(() => {
     return {
       businessName: "",
       description: "",
       phone: "",
       whatsapp: "",
       logo: null,
-      templateKey
+      templateKey: initialPlanState.templateKey
     };
   });
+  const [isPlanLocked, setIsPlanLocked] = useState(initialPlanState.locked);
   const [errors, setErrors] = useState({});
   const [logoPreview, setLogoPreview] = useState(null);
   const [page, setPage] = useState("form");
   const [createdSlug, setCreatedSlug] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileRef = useRef(null);
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") {
+        resolve(false);
+        return;
+      }
+
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+
+      const existing = document.getElementById("razorpay-checkout-script");
+      if (existing) {
+        resolve(true);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.id = "razorpay-checkout-script";
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const processPlanPayment = async ({ plan, user, businessSlug }) => {
+    if (!plan?.price || plan.price <= 0) return;
+
+    const scriptReady = await loadRazorpayScript();
+    if (!scriptReady) {
+      throw new Error("Could not load Razorpay checkout script.");
+    }
+
+    const customerName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Catalog Owner";
+    const customerEmail = user.email || "";
+    const customerPhone = form.phone?.trim() || "";
+
+    const orderRes = await fetch("/api/razorpay/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product: {
+          id: plan.key,
+          name: `${plan.name} Catalog Plan`,
+          price: plan.price
+        },
+        business: {
+          id: user.id,
+          slug: businessSlug,
+          name: form.businessName.trim()
+        },
+        customer: {
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone
+        }
+      })
+    });
+
+    const orderData = await orderRes.json();
+    if (!orderRes.ok) {
+      throw new Error(orderData?.error || "Unable to create Razorpay order.");
+    }
+
+    await new Promise((resolve, reject) => {
+      const razorpay = new window.Razorpay({
+        key: orderData.keyId,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "Catalyst",
+        description: `${plan.name} Plan`,
+        order_id: orderData.order.id,
+        prefill: {
+          name: customerName,
+          email: customerEmail,
+          contact: customerPhone
+        },
+        theme: {
+          color: "#e5281e"
+        },
+        handler: async (paymentResponse) => {
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...paymentResponse,
+                metadata: {
+                  businessId: user.id,
+                  businessSlug,
+                  productId: plan.key,
+                  productName: `${plan.name} Catalog Plan`,
+                  amount: plan.price,
+                  currency: "INR",
+                  customerName,
+                  customerEmail,
+                  customerPhone
+                }
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.verified) {
+              reject(new Error(verifyData?.error || "Payment verification failed."));
+              return;
+            }
+
+            resolve(true);
+          } catch (err) {
+            reject(err);
+          }
+        },
+        modal: {
+          ondismiss: () => reject(new Error("Payment cancelled."))
+        }
+      });
+
+      razorpay.on("payment.failed", (event) => {
+        reject(new Error(event?.error?.description || "Payment failed."));
+      });
+
+      razorpay.open();
+    });
+  };
 
   // Check if user is logged in when component mounts
   useEffect(() => {
@@ -1720,6 +1857,9 @@ function RegisterPage({ onNavigate, lang }) {
     
     // Save to Supabase
     try {
+      setIsSubmitting(true);
+      setErrors({});
+
       // First check if there's a valid session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
@@ -1742,6 +1882,16 @@ function RegisterPage({ onNavigate, lang }) {
       // Generate slug, pre-check uniqueness, then insert.
       // If a concurrent insert still creates a slug conflict (409/23505), we retry with a new slug.
       const baseSlug = generateSlug(form.businessName) || "business";
+      const selectedPlan = getTemplateByKey(form.templateKey || DEFAULT_TEMPLATE_KEY);
+
+      if ((selectedPlan?.price || 0) > 0) {
+        await processPlanPayment({
+          plan: selectedPlan,
+          user,
+          businessSlug: baseSlug
+        });
+      }
+
       const maxInsertAttempts = 6;
       let insertError = null;
       let insertedSlug = "";
@@ -1765,7 +1915,7 @@ function RegisterPage({ onNavigate, lang }) {
           whatsapp: form.whatsapp?.trim() || null,
           user_id: user.id,
           slug: candidateSlug,
-          template_key: form.templateKey || DEFAULT_TEMPLATE_KEY
+          template_key: getPersistedTemplateKey(form.templateKey || DEFAULT_TEMPLATE_KEY)
         };
 
         let insertResult = await supabase.from("businesses").insert([payload]);
@@ -1808,7 +1958,7 @@ function RegisterPage({ onNavigate, lang }) {
         } else if (insertError.code === "23505" || message.includes("businesses_slug_unique")) {
           setErrors({ businessName: "Failed to create business: slug already exists. Please try again with a slightly different business name." });
         } else if (message.includes("template_key")) {
-          setErrors({ businessName: "Failed to create business: template_key is not available in DB yet. Run add_business_template_key.sql and try again." });
+          setErrors({ businessName: "Failed to create business: template key constraint mismatch. Run add_business_template_key.sql (or update allowed keys) and try again." });
         } else {
           setErrors({ businessName: `Failed to create business: ${insertError.message}` });
         }
@@ -1821,7 +1971,9 @@ function RegisterPage({ onNavigate, lang }) {
       setPage("creating");
     } catch (err) {
       console.error("Unexpected error:", err);
-      setErrors({ businessName: "An unexpected error occurred. Please try again." });
+      setErrors({ businessName: err.message || "An unexpected error occurred. Please try again." });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1835,6 +1987,8 @@ function RegisterPage({ onNavigate, lang }) {
 
   if (page === "creating") return <CatalogCreating businessName={form.businessName} onDone={() => setPage("success")} lang={lang} />;
   if (page === "success") return <SuccessPage businessName={form.businessName} catalogSlug={createdSlug} onNavigate={onNavigate} lang={lang} />;
+
+  const selectedPlan = getTemplateByKey(form.templateKey || DEFAULT_TEMPLATE_KEY);
 
   return (
     <div className="page-enter" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
@@ -1919,61 +2073,97 @@ function RegisterPage({ onNavigate, lang }) {
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.35)", marginBottom: 10 }}>{tr(lang, "Catalog Template", "कैटलॉग टेम्पलेट")}</label>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                gap: 10,
-                marginBottom: 18
-              }}>
-                {CATALOG_TEMPLATES.map((template) => {
-                  const isActive = form.templateKey === template.key;
-                  return (
-                    <button
-                      key={template.key}
-                      type="button"
-                      onClick={() => set("templateKey", template.key)}
-                      style={{
-                        textAlign: "left",
-                        background: isActive ? "rgba(229,40,30,0.16)" : "rgba(255,255,255,0.02)",
-                        border: isActive ? "1px solid rgba(229,40,30,0.45)" : "1px solid var(--border)",
-                        borderRadius: 10,
-                        padding: "8px",
-                        color: "var(--white)",
-                        cursor: "pointer",
-                        overflow: "hidden"
-                      }}
-                    >
-                      <div style={{
-                        width: "100%",
-                        height: 74,
-                        borderRadius: 8,
-                        overflow: "hidden",
-                        marginBottom: 8,
-                        border: "1px solid var(--border)",
-                        background: "rgba(255,255,255,0.03)"
-                      }}>
-                        <img
-                          src={template.previewImage}
-                          alt={`${template.name} preview`}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block"
-                          }}
-                        />
-                      </div>
-                      <div style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
-                        {template.emoji} {template.name}
-                      </div>
-                      <div style={{ fontSize: "0.72rem", color: "var(--muted)", lineHeight: 1.4 }}>
-                        {template.description}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.35)", marginBottom: 10 }}>{tr(lang, "Catalog Plan", "कैटलॉग प्लान")}</label>
+
+              {isPlanLocked ? (
+                <div style={{
+                  border: "1px solid rgba(229,40,30,0.35)",
+                  background: "rgba(229,40,30,0.09)",
+                  borderRadius: 12,
+                  padding: "14px 16px",
+                  marginBottom: 18
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <div style={{ fontWeight: 700 }}>{selectedPlan.emoji} {selectedPlan.name}</div>
+                    <div style={{ color: selectedPlan.color, fontWeight: 800 }}>{selectedPlan.priceLabel}</div>
+                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{selectedPlan.description}</div>
+                  <button
+                    type="button"
+                    onClick={() => setIsPlanLocked(false)}
+                    style={{
+                      marginTop: 10,
+                      background: "transparent",
+                      border: "1px solid var(--border)",
+                      color: "var(--white)",
+                      borderRadius: 8,
+                      padding: "7px 10px",
+                      cursor: "pointer",
+                      fontSize: "0.75rem",
+                      fontWeight: 600
+                    }}
+                  >
+                    Change Plan
+                  </button>
+                </div>
+              ) : (
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                  gap: 10,
+                  marginBottom: 18
+                }}>
+                  {CATALOG_TEMPLATES.map((template) => {
+                    const isActive = form.templateKey === template.key;
+                    return (
+                      <button
+                        key={template.key}
+                        type="button"
+                        onClick={() => set("templateKey", template.key)}
+                        style={{
+                          textAlign: "left",
+                          background: isActive ? "rgba(229,40,30,0.16)" : "rgba(255,255,255,0.02)",
+                          border: isActive ? "1px solid rgba(229,40,30,0.45)" : "1px solid var(--border)",
+                          borderRadius: 10,
+                          padding: "8px",
+                          color: "var(--white)",
+                          cursor: "pointer",
+                          overflow: "hidden"
+                        }}
+                      >
+                        <div style={{
+                          width: "100%",
+                          height: 74,
+                          position: "relative",
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          marginBottom: 8,
+                          border: "1px solid var(--border)",
+                          background: "rgba(255,255,255,0.03)"
+                        }}>
+                          <Image
+                            src={template.previewImage}
+                            alt={`${template.name} preview`}
+                            fill
+                            unoptimized
+                            sizes="(max-width: 768px) 100vw, 160px"
+                            style={{
+                              objectFit: "cover",
+                              display: "block"
+                            }}
+                          />
+                        </div>
+                        <div style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
+                          {template.emoji} {template.name} • {template.priceLabel}
+                        </div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--muted)", lineHeight: 1.4 }}>
+                          {template.description}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.35)", marginBottom: 8 }}>{tr(lang, "Logo", "लोगो")}</label>
               <div onClick={() => fileRef.current?.click()} style={{
@@ -1997,8 +2187,8 @@ function RegisterPage({ onNavigate, lang }) {
               </div>
             </div>
 
-            <button className="c-btn-red" style={{ marginTop: 8, padding: "18px 24px", fontSize: "1rem", width: "100%" }} onClick={handleSubmit}>
-              {tr(lang, "Create Your Catalyst", "अपना Catalyst बनाएं")} 🚀
+            <button className="c-btn-red" disabled={isSubmitting} style={{ marginTop: 8, padding: "18px 24px", fontSize: "1rem", width: "100%", opacity: isSubmitting ? 0.8 : 1, cursor: isSubmitting ? "not-allowed" : "pointer" }} onClick={handleSubmit}>
+              {isSubmitting ? tr(lang, "Processing...", "प्रोसेस हो रहा है...") : `${tr(lang, "Create Your Catalyst", "अपना Catalyst बनाएं")} 🚀`}
             </button>
             <p style={{ textAlign: "center", fontSize: "0.72rem", color: "rgba(245,243,239,0.25)" }}>
               {tr(lang, "By continuing you agree to Catalyst's Terms of Service and Privacy Policy.", "आगे बढ़कर आप Catalyst की सेवा शर्तों और प्राइवेसी पॉलिसी से सहमत होते हैं।")}

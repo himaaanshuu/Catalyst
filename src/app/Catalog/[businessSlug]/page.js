@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/Library/Supabase";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 
 /* ─────────────────────────────────────────────
    GLOBAL STYLES
@@ -54,13 +55,59 @@ const GlobalStyles = () => (
         linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
       background-size: 60px 60px;
     }
+
+    .pdf-export .export-hide { display: none !important; }
+    .pdf-export .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .pdf-export * { transition: none !important; animation: none !important; }
+
+    @media (max-width: 900px) {
+      .pdf-export .product-grid { grid-template-columns: 1fr !important; }
+    }
+
+    .checkout-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 4, 12, 0.72);
+      backdrop-filter: blur(8px);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .checkout-modal {
+      width: min(520px, 100%);
+      border-radius: 18px;
+      background: #0f1118;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+    }
+
+    .checkout-modal input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .checkout-modal input:focus {
+      border-color: rgba(18,109,235,0.65);
+      background: rgba(18,109,235,0.10);
+    }
   `}</style>
 );
 
 /* ─────────────────────────────────────────────
    PRODUCT CARD FOR CUSTOMERS
 ───────────────────────────────────────────── */
-function ProductCard({ product, businessName, whatsappNumber }) {
+function ProductCard({ product, businessName, whatsappNumber, onPayNow, isPdfMode, isPaying }) {
   const handleOrder = () => {
     if (!whatsappNumber) {
       alert("WhatsApp number not available for this business.");
@@ -154,6 +201,7 @@ function ProductCard({ product, businessName, whatsappNumber }) {
         {/* WhatsApp Order Button */}
         <button
           onClick={handleOrder}
+          className="export-hide"
           style={{
             width: "100%",
             background: "#25D366",
@@ -185,6 +233,43 @@ function ProductCard({ product, businessName, whatsappNumber }) {
           </svg>
           Order on WhatsApp
         </button>
+
+        {!isPdfMode && (
+          <button
+            onClick={() => onPayNow(product)}
+            className="export-hide"
+            disabled={isPaying}
+            style={{
+              width: "100%",
+              background: isPaying ? "rgba(18,109,235,0.28)" : "rgba(18,109,235,0.18)",
+              color: "#8fc2ff",
+              border: "1px solid rgba(18,109,235,0.35)",
+              borderRadius: 10,
+              padding: "12px 20px",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              cursor: isPaying ? "not-allowed" : "pointer",
+              fontFamily: "'Outfit', sans-serif",
+              transition: "background 0.2s, transform 0.15s",
+              marginTop: 10,
+              opacity: isPaying ? 0.9 : 1
+            }}
+            onMouseEnter={e => {
+              if (!isPaying) {
+                e.currentTarget.style.background = "rgba(18,109,235,0.28)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }
+            }}
+            onMouseLeave={e => {
+              if (!isPaying) {
+                e.currentTarget.style.background = "rgba(18,109,235,0.18)";
+                e.currentTarget.style.transform = "translateY(0)";
+              }
+            }}
+          >
+            {isPaying ? "Opening Razorpay..." : "Pay with Razorpay"}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -196,18 +281,38 @@ function ProductCard({ product, businessName, whatsappNumber }) {
 export default function CatalogPage() {
   const params = useParams();
   const businessSlug = params.businessSlug;
+  const catalogRef = useRef(null);
 
   const [business, setBusiness] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isPdfMode, setIsPdfMode] = useState(false);
+  const [isPayingProductId, setIsPayingProductId] = useState(null);
+  const [checkoutStatus, setCheckoutStatus] = useState(null);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [checkoutForm, setCheckoutForm] = useState({ name: "", email: "", phone: "" });
 
-  useEffect(() => {
-    loadCatalog();
-  }, [businessSlug]);
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (document.getElementById("razorpay-checkout-script")) {
+        resolve(true);
+        return;
+      }
 
-  const loadCatalog = async () => {
+      const script = document.createElement("script");
+      script.id = "razorpay-checkout-script";
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const loadCatalog = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -239,7 +344,11 @@ export default function CatalogPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [businessSlug]);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -255,6 +364,206 @@ export default function CatalogPage() {
     const message = `Check out ${business.business_name} catalog!`;
     const url = window.location.href;
     window.open(`https://wa.me/?text=${encodeURIComponent(message + "\n" + url)}`, '_blank');
+  };
+
+  const downloadCatalogPdf = async () => {
+    if (!catalogRef.current) return;
+
+    setIsPdfMode(true);
+    await new Promise(resolve => setTimeout(resolve, 250));
+    setIsGeneratingPdf(true);
+
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf")
+      ]);
+
+      const canvas = await html2canvas(catalogRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#060608",
+        windowWidth: document.documentElement.scrollWidth,
+        scrollY: -window.scrollY
+      });
+
+      const imageData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imageWidth = pdfWidth;
+      const imageHeight = (canvas.height * imageWidth) / canvas.width;
+
+      let remainingHeight = imageHeight;
+      let position = 0;
+
+      pdf.addImage(imageData, "PNG", 0, position, imageWidth, imageHeight, undefined, "FAST");
+      remainingHeight -= pdfHeight;
+
+      while (remainingHeight > 0) {
+        position = remainingHeight - imageHeight;
+        pdf.addPage();
+        pdf.addImage(imageData, "PNG", 0, position, imageWidth, imageHeight, undefined, "FAST");
+        remainingHeight -= pdfHeight;
+      }
+
+      const fileSlug = business?.slug || businessSlug || "catalog";
+      pdf.save(`${fileSlug}-catalog.pdf`);
+    } catch (err) {
+      console.error("Error generating PDF:", err);
+      alert("Could not generate PDF. Please try again.");
+    } finally {
+      setIsGeneratingPdf(false);
+      setIsPdfMode(false);
+    }
+  };
+
+  const openCheckoutModal = (product) => {
+    setSelectedProduct(product);
+    setCheckoutForm({
+      name: "",
+      email: "",
+      phone: business?.phone || ""
+    });
+    setIsCheckoutModalOpen(true);
+  };
+
+  const closeCheckoutModal = () => {
+    if (isPayingProductId) return;
+    setIsCheckoutModalOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const startRazorpayPayment = async () => {
+    try {
+      if (!selectedProduct) return;
+
+      const scriptReady = await loadRazorpayScript();
+      if (!scriptReady) {
+        alert("Unable to load Razorpay checkout. Please try again.");
+        return;
+      }
+
+      const customerName = checkoutForm.name.trim();
+      if (!customerName) {
+        alert("Please enter your name.");
+        return;
+      }
+
+      const email = checkoutForm.email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        alert("Please enter a valid email address.");
+        return;
+      }
+
+      const phone = checkoutForm.phone.trim();
+      if (!phone) {
+        alert("Please enter your phone number.");
+        return;
+      }
+
+      setIsPayingProductId(selectedProduct.id);
+      setCheckoutStatus(null);
+
+      const response = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product: {
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price
+          },
+          business: {
+            id: business.id,
+            slug: business.slug,
+            name: business.business_name
+          },
+          customer: {
+            name: customerName,
+            email,
+            phone
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Could not start Razorpay checkout.");
+      }
+
+      const razorpayOptions = {
+        key: data.keyId,
+        amount: data.order.amount,
+        currency: data.order.currency,
+        name: business.business_name,
+        description: selectedProduct.name,
+        order_id: data.order.id,
+        prefill: {
+          name: data.customer.name,
+          email: data.customer.email,
+          contact: data.customer.contact
+        },
+        theme: {
+          color: "#e5281e"
+        },
+        handler: async (paymentResponse) => {
+          const verifyRes = await fetch("/api/razorpay/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...paymentResponse,
+              metadata: {
+                businessId: business.id,
+                businessSlug: business.slug,
+                productId: selectedProduct.id,
+                productName: selectedProduct.name,
+                amount: selectedProduct.price,
+                currency: "INR",
+                customerName,
+                customerEmail: email,
+                customerPhone: phone
+              }
+            })
+          });
+
+          const verifyData = await verifyRes.json();
+          if (!verifyRes.ok || !verifyData.verified) {
+            throw new Error(verifyData?.error || "Payment verification failed.");
+          }
+
+          setCheckoutStatus({
+            type: "success",
+            message: `Payment successful. Payment ID: ${verifyData.paymentId}`
+          });
+          setIsCheckoutModalOpen(false);
+          setSelectedProduct(null);
+        },
+        modal: {
+          ondismiss: () => {
+            setCheckoutStatus({
+              type: "failed",
+              message: "Payment cancelled by user."
+            });
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(razorpayOptions);
+      razorpay.on("payment.failed", (event) => {
+        const reason = event?.error?.description || "Payment failed.";
+        setCheckoutStatus({ type: "failed", message: reason });
+      });
+
+      razorpay.open();
+    } catch (err) {
+      console.error("Razorpay checkout error:", err);
+      setCheckoutStatus({ type: "failed", message: err.message || "Unable to start payment right now." });
+      alert(err.message || "Unable to start payment right now.");
+    } finally {
+      setIsPayingProductId(null);
+    }
   };
 
   if (loading) {
@@ -301,7 +610,7 @@ export default function CatalogPage() {
             <p style={{ color: "var(--muted)", marginBottom: 32 }}>
               {error || "The catalog you're looking for doesn't exist."}
             </p>
-            <a
+            <Link
               href="/"
               style={{
                 display: "inline-block",
@@ -317,7 +626,7 @@ export default function CatalogPage() {
               onMouseLeave={e => e.currentTarget.style.background = "var(--red)"}
             >
               Go to Homepage
-            </a>
+            </Link>
           </div>
         </div>
       </>
@@ -327,7 +636,10 @@ export default function CatalogPage() {
   return (
     <>
       <GlobalStyles />
-      <div className="page-enter" style={{
+      <div
+        ref={catalogRef}
+        className={`page-enter ${isPdfMode ? "pdf-export" : ""}`}
+        style={{
         minHeight: "100vh",
         background: "var(--bg)",
         paddingBottom: 60
@@ -435,7 +747,7 @@ export default function CatalogPage() {
             </div>
 
             {/* Share Buttons */}
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div className="export-hide" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <button
                 onClick={copyLink}
                 style={{
@@ -474,7 +786,50 @@ export default function CatalogPage() {
               >
                 📤 Share
               </button>
+              <button
+                onClick={downloadCatalogPdf}
+                disabled={isGeneratingPdf}
+                style={{
+                  background: isGeneratingPdf ? "rgba(100,150,255,0.2)" : "rgba(100,150,255,0.12)",
+                  border: "1px solid rgba(100,150,255,0.25)",
+                  borderRadius: 8,
+                  padding: "8px 16px",
+                  color: "#8cb0ff",
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                  cursor: isGeneratingPdf ? "not-allowed" : "pointer",
+                  fontFamily: "'Outfit', sans-serif",
+                  transition: "background 0.2s, opacity 0.2s",
+                  opacity: isGeneratingPdf ? 0.85 : 1
+                }}
+                onMouseEnter={e => {
+                  if (!isGeneratingPdf) e.currentTarget.style.background = "rgba(100,150,255,0.2)";
+                }}
+                onMouseLeave={e => {
+                  if (!isGeneratingPdf) e.currentTarget.style.background = "rgba(100,150,255,0.12)";
+                }}
+              >
+                {isGeneratingPdf ? "⏳ Generating PDF..." : "📄 Download PDF"}
+              </button>
             </div>
+
+            {checkoutStatus && (
+              <div
+                className="export-hide"
+                style={{
+                  marginTop: 18,
+                  background: checkoutStatus.type === "success" ? "rgba(37,211,102,0.14)" : "rgba(229,40,30,0.14)",
+                  border: checkoutStatus.type === "success" ? "1px solid rgba(37,211,102,0.3)" : "1px solid rgba(229,40,30,0.35)",
+                  color: checkoutStatus.type === "success" ? "#67f09f" : "#ff8d87",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  maxWidth: 680,
+                  fontSize: "0.9rem"
+                }}
+              >
+                {checkoutStatus.message}
+              </div>
+            )}
           </div>
         </div>
 
@@ -482,7 +837,7 @@ export default function CatalogPage() {
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px" }}>
           {/* Search Bar */}
           {products.length > 0 && (
-            <div style={{ marginBottom: 32 }}>
+            <div className="export-hide" style={{ marginBottom: 32 }}>
               <input
                 type="text"
                 placeholder="Search products..."
@@ -539,7 +894,7 @@ export default function CatalogPage() {
               </p>
             </div>
           ) : (
-            <div style={{
+            <div className="product-grid" style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
               gap: 24
@@ -550,6 +905,9 @@ export default function CatalogPage() {
                   product={product}
                   businessName={business.business_name}
                   whatsappNumber={business.whatsapp}
+                  onPayNow={openCheckoutModal}
+                  isPdfMode={isPdfMode}
+                  isPaying={isPayingProductId === product.id}
                 />
               ))}
             </div>
@@ -557,7 +915,7 @@ export default function CatalogPage() {
         </div>
 
         {/* Footer */}
-        <footer style={{
+        <footer className="export-hide" style={{
           textAlign: "center",
           padding: "40px 24px",
           borderTop: "1px solid var(--border)",
@@ -566,7 +924,7 @@ export default function CatalogPage() {
         }}>
           <p>
             Powered by{" "}
-            <a
+            <Link
               href="/"
               style={{
                 color: "var(--red)",
@@ -575,10 +933,89 @@ export default function CatalogPage() {
               }}
             >
               Catalyst
-            </a>
+            </Link>
           </p>
         </footer>
       </div>
+
+      {isCheckoutModalOpen && selectedProduct && (
+        <div className="checkout-overlay export-hide" onClick={closeCheckoutModal}>
+          <div className="checkout-modal" onClick={e => e.stopPropagation()}>
+            <div style={{ padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.3rem", marginBottom: 6 }}>
+                Checkout with Razorpay
+              </h3>
+              <p style={{ color: "var(--muted)", fontSize: "0.92rem" }}>
+                {selectedProduct.name} • ₹{selectedProduct.price}
+              </p>
+            </div>
+
+            <div style={{ padding: 20, display: "grid", gap: 12 }}>
+              <input
+                type="text"
+                placeholder="Full name"
+                value={checkoutForm.name}
+                onChange={(e) => setCheckoutForm(prev => ({ ...prev, name: e.target.value }))}
+                disabled={!!isPayingProductId}
+              />
+              <input
+                type="email"
+                placeholder="Email address"
+                value={checkoutForm.email}
+                onChange={(e) => setCheckoutForm(prev => ({ ...prev, email: e.target.value }))}
+                disabled={!!isPayingProductId}
+              />
+              <input
+                type="tel"
+                placeholder="Phone number"
+                value={checkoutForm.phone}
+                onChange={(e) => setCheckoutForm(prev => ({ ...prev, phone: e.target.value }))}
+                disabled={!!isPayingProductId}
+              />
+            </div>
+
+            <div style={{
+              padding: "16px 20px",
+              display: "flex",
+              gap: 10,
+              justifyContent: "flex-end",
+              borderTop: "1px solid rgba(255,255,255,0.08)"
+            }}>
+              <button
+                onClick={closeCheckoutModal}
+                disabled={!!isPayingProductId}
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  borderRadius: 10,
+                  color: "var(--white)",
+                  padding: "10px 14px",
+                  cursor: !!isPayingProductId ? "not-allowed" : "pointer",
+                  fontFamily: "'Outfit', sans-serif"
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={startRazorpayPayment}
+                disabled={!!isPayingProductId}
+                style={{
+                  background: "rgba(18,109,235,0.24)",
+                  border: "1px solid rgba(18,109,235,0.44)",
+                  borderRadius: 10,
+                  color: "#9cc9ff",
+                  padding: "10px 14px",
+                  cursor: !!isPayingProductId ? "not-allowed" : "pointer",
+                  fontFamily: "'Outfit', sans-serif",
+                  fontWeight: 600
+                }}
+              >
+                {isPayingProductId ? "Starting checkout..." : "Continue to Razorpay"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

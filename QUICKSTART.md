@@ -75,6 +75,13 @@ SELECT tablename, rowsecurity FROM pg_tables
 WHERE schemaname = 'public';
 ```
 
+### 5. Add Payments Table (Razorpay logs)
+
+```bash
+# Copy contents of add_payments_table.sql
+# Paste into Supabase SQL Editor -> Run
+```
+
 ---
 
 ## 🔑 Environment Variables
@@ -84,6 +91,11 @@ WHERE schemaname = 'public';
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Razorpay (for online payments)
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
 **Restart dev server after changes!**

@@ -374,7 +374,7 @@ export default function LoginPage() {
             textAlign: "center"
           }}>
             <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <a
                 href="/Authentication/signup"
                 style={{

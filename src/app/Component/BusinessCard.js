@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function BusinessCard({ business, onEdit, onDelete, onView }) {
   return (
     <div className="feature-card" style={{
@@ -15,12 +17,13 @@ export default function BusinessCard({ business, onEdit, onDelete, onView }) {
         }}>
           {/* Logo */}
           {business.logo ? (
-            <img
+            <Image
               src={business.logo}
               alt={business.business_name}
+              width={56}
+              height={56}
+              unoptimized
               style={{
-                width: 56,
-                height: 56,
                 borderRadius: 12,
                 objectFit: "cover",
                 border: "1px solid var(--border)"
