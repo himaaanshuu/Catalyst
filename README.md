@@ -331,6 +331,10 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 - Never paste full secret values in screenshots, logs, or support chats.
 - Rotate keys immediately if you accidentally expose any secret.
 
+**Deployment note (important):**
+- `.env.local` is local-only. For hosted builds you must add the same keys in your platform env settings (for example Vercel Project Settings -> Environment Variables).
+- If these are not configured in hosting, you will get: `Missing Razorpay env vars...` and paid checkout will not open.
+
 **Masked example (safe to share):**
 ```env
 RAZORPAY_KEY_ID=rzp_test_xxxx****xxxx

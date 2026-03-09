@@ -1,20 +1,40 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 
+function getRazorpayConfig() {
+  const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const missing = [];
+
+  if (!keyId) missing.push("RAZORPAY_KEY_ID");
+  if (!keySecret) missing.push("RAZORPAY_KEY_SECRET");
+
+  return {
+    keyId,
+    keySecret,
+    missing,
+    enabled: missing.length === 0
+  };
+}
+
 function normalizeAmount(value) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
   return Math.round(parsed * 100);
 }
 
+export async function GET() {
+  const { enabled, missing } = getRazorpayConfig();
+  return NextResponse.json({ enabled, missing });
+}
+
 export async function POST(request) {
   try {
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const { keyId, keySecret, enabled, missing } = getRazorpayConfig();
 
-    if (!keyId || !keySecret) {
+    if (!enabled) {
       return NextResponse.json(
-        { error: "Missing Razorpay env vars. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET." },
+        { error: `Missing Razorpay env vars: ${missing.join(", ")}. Configure them in your deployment environment.` },
         { status: 500 }
       );
     }

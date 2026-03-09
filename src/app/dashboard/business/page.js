@@ -1721,6 +1721,13 @@ function RegisterPage({ onNavigate, lang }) {
   const processPlanPayment = async ({ plan, user, businessSlug }) => {
     if (!plan?.price || plan.price <= 0) return;
 
+    const configRes = await fetch("/api/razorpay/create-order", { method: "GET" });
+    const configData = await configRes.json();
+    if (!configRes.ok || !configData?.enabled) {
+      const missing = configData?.missing?.length ? configData.missing.join(", ") : "RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET";
+      throw new Error(`Payment setup incomplete. Missing: ${missing}. Please configure these in deployment env vars.`);
+    }
+
     const scriptReady = await loadRazorpayScript();
     if (!scriptReady) {
       throw new Error("Could not load Razorpay checkout script.");
