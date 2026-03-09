@@ -98,6 +98,16 @@ RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
+**Keep secrets safe:**
+- Do not commit `.env.local`.
+- Share only masked values in logs/screenshots.
+
+```env
+RAZORPAY_KEY_ID=rzp_test_xxxx****xxxx
+RAZORPAY_KEY_SECRET=****REDACTED****
+SUPABASE_SERVICE_ROLE_KEY=****REDACTED****
+```
+
 **Restart dev server after changes!**
 
 ---

@@ -164,7 +164,12 @@ catalyst/
 
 3. **Set up environment variables**
    
-   Create `.env.local` in the root directory:
+   Copy example env file:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+   Then update `.env.local` with real values:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -319,6 +324,19 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 **Where to find these:**
 - Go to Supabase Dashboard → Settings → API
 - Copy **Project URL** and **anon/public** key
+
+**Security best practices:**
+- Never commit `.env.local`.
+- Commit only `.env.local.example` and `.env.example` (placeholders only).
+- Never paste full secret values in screenshots, logs, or support chats.
+- Rotate keys immediately if you accidentally expose any secret.
+
+**Masked example (safe to share):**
+```env
+RAZORPAY_KEY_ID=rzp_test_xxxx****xxxx
+RAZORPAY_KEY_SECRET=****REDACTED****
+SUPABASE_SERVICE_ROLE_KEY=****REDACTED****
+```
 
 ---
 
