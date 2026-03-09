@@ -41,15 +41,19 @@
 - 📊 **Business Dashboard** - View all businesses and products in one place
 - 🌐 **Public Catalog Pages** - Each business gets a unique, shareable URL
 - ⚙️ **Settings Management** - Update profile and business information
-- 🎨 **Template Selection** - Choose from curated catalog templates during business setup
-- 🖼️ **Template Previews** - Real visual preview thumbnails for each template
+- 💳 **Razorpay Plan Checkout** - Paid plans are processed through Razorpay before catalog creation
+- 🧾 **Pricing Plans** - Free / Basic / Standard / Pro plans with tiered pricing and limits
+- 🪪 **Plan Lock During Signup** - Plan selected on homepage carries into registration automatically
+- 🖼️ **Template/Plan Previews** - Visual previews for each available plan style
 - 🔗 **Stable Public Links** - Normalized lowercase `/catalog/:slug` links for easier sharing
 
 ### For Customers
 - 🛍️ **Beautiful Product Display** - Mobile-first, responsive catalog pages
 - 💬 **WhatsApp Ordering** - One-click order via WhatsApp with pre-filled messages
+- 💸 **Razorpay Product Payments** - Customers can pay for products directly from catalog cards
 - 🔍 **Product Search** - Find products quickly with real-time search
 - 📤 **Easy Sharing** - Copy link or share catalog on social media
+- 📄 **Download Catalog as PDF** - Export catalog pages for offline share or print
 - 📱 **Mobile Optimized** - Fast, touch-friendly interface
 
 ### Technical Features
@@ -59,6 +63,9 @@
 - 🌍 **SEO-Friendly URLs** - Clean slugs like `/catalog/your-business`
 - 🔄 **Real-time Updates** - Instant sync across devices
 - 🧩 **Shared Template Registry** - Centralized template config in `src/Library/catalogTemplates.js`
+- 🧮 **Plan-to-DB Key Mapping** - Backward-compatible handling for legacy template keys
+- 🧾 **Payment Logging** - Verified Razorpay transactions saved to Supabase `payments` table
+- 🏠 **Homepage Pricing + Popup** - Dedicated pricing section and plan selector modal on `/`
 - 🗺️ **SEO Metadata Routes** - Dynamic `robots.txt` and `sitemap.xml` support
 - 🌐 **EN/HI Language Toggle** - Hindi and English toggle on key landing/dashboard views
 
@@ -259,6 +266,12 @@ Execute the SQL from `add_business_slugs.sql` in Supabase SQL Editor:
 # Copy the contents of add_business_slugs.sql and run in Supabase
 ```
 
+### 3.1 Run Migration for `template_key`
+
+Execute SQL from `add_business_template_key.sql` in Supabase SQL Editor.
+
+This adds `template_key` support for business records and keeps compatibility with plan selection.
+
 ### 4. Set Up Row-Level Security
 
 Execute the SQL from `setup_rls_policies.sql`:
@@ -392,6 +405,42 @@ await supabase.auth.signOut()
 - Include country code
 - Remove special characters
 
+### 9. **"Insert error" while creating business (template_key mismatch)**
+
+**Cause:** Database constraint still expects old template keys and migration is missing/outdated.
+
+**Solution:**
+- Run `add_business_template_key.sql` in Supabase SQL Editor.
+- If constraint already exists with old values only, update the check constraint manually.
+- Re-test by creating a business from homepage-selected plan.
+
+### 10. **Razorpay modal not opening during plan/business creation**
+
+**Cause:** Missing Razorpay env vars, script blocked, or order creation failed.
+
+**Solution:**
+- Ensure `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set in `.env.local`.
+- Restart dev server after env updates.
+- Open DevTools Network tab and check `/api/razorpay/create-order` response.
+
+### 11. **Payment verifies but record is not saved in `payments` table**
+
+**Cause:** Missing `SUPABASE_SERVICE_ROLE_KEY` or `payments` table not created.
+
+**Solution:**
+- Add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`.
+- Run `add_payments_table.sql` migration.
+- Confirm API route logs do not show insert errors.
+
+### 12. **"Failed to load resource: 400" for image URLs (`/_next/image`)**
+
+**Cause:** Next image optimizer rejecting preview sources in some contexts.
+
+**Solution:**
+- Hard refresh (`Cmd+Shift+R`).
+- Use current code (plan preview images are configured with `unoptimized` where required).
+- Verify image URLs are valid and publicly reachable.
+
 ---
 
 ## 🚢 Deployment
@@ -428,11 +477,10 @@ After deployment, update:
 
 ## 🚧 Currently Working On
 
-- Production deployment hardening and environment validation
-- Finalizing live-domain link flow and share reliability checks
-- Public catalog polish (error states, missing-business UX, loading experience)
-- End-to-end QA for template-driven catalog generation
-- Lint cleanup and code quality pass before broader release
+- Enforcing strict plan limits (product caps) at creation/update time
+- Dashboard UI for payment history and reconciliation
+- Webhook-based Razorpay confirmation for stronger backend guarantees
+- Production observability and alerting for payment/API failures
 
 ---
 
@@ -442,7 +490,7 @@ After deployment, update:
 - [ ] Image upload to Supabase Storage (replace external-only image URLs)
 - [ ] Product categories and category-level filtering
 - [ ] Bulk product import (CSV)
-- [ ] PDF export for public catalogs
+- [x] PDF export for public catalogs
 - [ ] Better public catalog 404 and "business not found" UX
 
 ### Phase 2: Business Features
@@ -456,7 +504,7 @@ After deployment, update:
 - [ ] Custom domains for catalogs
 - [ ] Theme customization (colors, fonts)
 - [ ] Full multi-language coverage for all pages/components
-- [ ] Payment integration (Stripe, Razorpay)
+- [x] Razorpay integration
 - [ ] QR code generation
 - [ ] Team collaboration
 
